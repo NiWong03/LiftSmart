@@ -1,27 +1,344 @@
-import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 
-const app = () => {
+const HomeScreen = () => {
+  const theme = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style= {styles.text}>Home</Text>
-    </View>
-  )
-}
+    <View style={styles.mainContainer}>
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.content}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <Text variant="displaySmall" style={[styles.greeting, { color: theme.colors.onBackground }]}>
+              Good morning,
+            </Text>
+            <Text variant="headlineMedium" style={[styles.name, { color: theme.colors.primary }]}>
+              - Insert User's Name - 
+            </Text>
+          </View>
 
-export default app
+          {/* Quick Stats */}
+          <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  7
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Day Streak
+                </Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  12
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Workouts
+                </Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  85%
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Goal Progress
+                </Text>
+              </View>
+            </View>
+          </Surface>
+
+          {/* Today's Workout Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <View>
+                  <Text variant="titleLarge" style={{ color: '#666666' , fontWeight: 'bold' }}>
+                    Today's Focus
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Upper Body Strength
+                  </Text>
+                </View>
+                <Avatar.Icon 
+                  size={48} 
+                  icon="dumbbell" 
+                  style={{borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                  color={theme.colors.onPrimaryContainer}
+                />
+              </View>
+              
+              <View style={styles.workoutDetails}>
+                <View style={styles.detailItem}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Duration
+                  </Text>
+                  <Text variant="titleLarge" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>
+                    45 min
+                  </Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <Text variant="bodySmall" style={{ paddingVertical: 4, color: theme.colors.onSurfaceVariant }}>
+                    Intensity
+                  </Text>
+                  <Chip 
+                    mode="flat" 
+                    textStyle={{ color: theme.colors.onPrimaryContainer }}
+                    style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                  >
+                    Moderate
+                  </Chip>
+                </View>
+              </View>
+              
+              <View style={styles.cardActions}>
+                <Button 
+                  mode="contained" 
+                  onPress={() => console.log('Start workout')}
+                  style={styles.primaryButton}
+                  contentStyle={styles.buttonContent}
+                >
+                  Start Workout
+                </Button>
+                <Button 
+                  mode="outlined" 
+                  onPress={() => console.log('View details')}
+                  style={styles.secondaryButton}
+                >
+                  View Details
+                </Button>
+              </View>
+            </View>
+          </Surface>
+
+          {/* Quick Actions */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 16 }}>
+                Quick Actions
+              </Text>
+              <View style={styles.quickActions}>
+                <View style={styles.actionItem}>
+                  <IconButton
+                    icon="calendar"
+                    size={32}
+                    iconColor={theme.colors.primary}
+                    style={[styles.actionIcon, { backgroundColor: theme.colors.primaryContainer }]}
+                    onPress={() => console.log('Schedule')}
+                  />
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                    Schedule
+                  </Text>
+                </View>
+                <View style={styles.actionItem}>
+                  <IconButton
+                    icon="chart-line"
+                    size={32}
+                    iconColor={theme.colors.secondary}
+                    style={[styles.actionIcon, { backgroundColor: theme.colors.secondaryContainer }]}
+                    onPress={() => console.log('Progress')}
+                  />
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                    Progress
+                  </Text>
+                </View>
+                <View style={styles.actionItem}>
+                  <IconButton
+                    icon="clipboard-list"
+                    size={32}
+                    iconColor={theme.colors.primary}
+                    style={[styles.actionIcon, { backgroundColor: theme.colors.tertiaryContainer }]}
+                    onPress={() => console.log('Plan Details')}
+                  />
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                    Plan Details
+                  </Text>
+                </View>
+                <View style={styles.actionItem}>
+                  <IconButton
+                    icon="plus-circle"
+                    size={32}
+                    iconColor={theme.colors.primary}
+                    style={[styles.actionIcon, { backgroundColor: theme.colors.primaryContainer }]}
+                    onPress={() => console.log('Add Workout')}
+                  />
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                    Add Workout
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </Surface>
+
+          {/* AI Suggestions Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <View style={styles.aiCardHeader}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  AI Suggestions
+                </Text>
+                <IconButton
+                  icon="robot"
+                  size={24}
+                  iconColor={theme.colors.primary}
+                  onPress={() => console.log('AI Chatbot')}
+                />
+              </View>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+                Get personalized workout recommendations and tips from your AI fitness coach.
+              </Text>
+              <Button 
+                mode="outlined" 
+                onPress={() => console.log('Get AI Suggestions')}
+                style={styles.aiButton}
+                icon="lightbulb"
+              >
+                Get Suggestions
+              </Button>
+            </View>
+          </Surface>
+        </View>
+      </ScrollView>
+      {/* AI Chatbot Floating Button */}
+      <View style={styles.floatingChatbot}>
+        <IconButton
+          icon="robot"
+          size={32}
+          iconColor={theme.colors.onPrimaryContainer}
+          style={[styles.chatbotButton, { backgroundColor: theme.colors.tertiary }]}
+          onPress={() => console.log('Open AI Chatbot')}
+        />
+      </View>
+
+    </View>
+  );
+};
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   container: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
   },
-  text: {
-    color: 'black',
-    fontSize: 42,
+  content: {
+    padding: 16,
+    paddingTop: 60,
+    paddingBottom: 100, // Add extra padding for navbar and floating button
+  },
+  header: {
+    marginBottom: 20,
+  },
+  greeting: {
+    opacity: 0.8,
+  },
+  name: {
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 100,
+    marginTop: 4,
+  },
+  statsContainer: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#E5E7EB',
+  },
+  cardContainer: {
+    marginBottom: 20,
+    borderRadius: 12,
+  },
+  cardContent: {
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'transparent',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  workoutDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailItem: {
+    alignItems: 'center',
+  },
+  cardActions: {
+    paddingTop: 8,
+    gap: 12,
+  },
+  primaryButton: {
+    borderRadius: 12,
+    width: '100%',
+  },
+  secondaryButton: {
+    borderRadius: 12,
+    width: '100%',
+  },
+  buttonContent: {
+    paddingVertical: 4,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  actionIcon: {
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  aiCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  aiButton: {
+    borderRadius: 12,
+    width: '100%',
+    marginTop: 16,
+  },
+  floatingChatbot: {
+    position: 'absolute',
+    bottom: 100, // Adjust to account for navbar
+    right: 20,
+    zIndex: 1000,
+    opacity: 0.7,
+  },
+  chatbotButton: {
+    borderRadius: 24,
+    elevation: 8, // Add shadow for Android
+    shadowColor: '#000', // Add shadow for iOS
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
