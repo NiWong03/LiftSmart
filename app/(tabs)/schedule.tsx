@@ -1,3 +1,4 @@
+import EventDetailCard from '@/components/EventDetailCard';
 import { ThemedView } from '@/components/ThemedView';
 import EventModalComponent from '@/components/eventModal';
 import React, { useState } from 'react';
@@ -77,6 +78,8 @@ const Schedule: React.FC = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [date, setDate] = useState(new Date())
+  const [selectedEvent, setSelectedEvent] = useState<{ title: string; start: Date; end: Date } | null>(null)
+  const [isDetailVisible, setIsDetailVisible] = useState(false)
 
   const getViewModeLabel = () => {
     switch (viewMode) {
@@ -150,7 +153,11 @@ const Schedule: React.FC = () => {
         }}
         events={events}
         height={screenHeight}
-        onPressEvent={(event) => console.log(event.title)}
+        onPressEvent={(event) => {
+          // react-native-big-calendar passes event object
+          setSelectedEvent(event as { title: string; start: Date; end: Date });
+          setIsDetailVisible(true);
+        }}
         ampm={true}
         hourRowHeight={Math.max(40, screenHeight * 0.08)}
         mode={viewMode}
@@ -163,6 +170,12 @@ const Schedule: React.FC = () => {
         date={date}
         setDate={setDate}
         onAddEvent={handleAddEvent}
+      />
+
+      <EventDetailCard
+        visible={isDetailVisible}
+        event={selectedEvent}
+        onDismiss={() => setIsDetailVisible(false)}
       />
       
     </ThemedView>
