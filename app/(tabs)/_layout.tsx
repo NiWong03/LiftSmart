@@ -17,7 +17,7 @@ export default function TabLayout() {
           tabBarButton: HapticTab,
           tabBarStyle: {
             position: 'absolute',
-            backgroundColor: '#D0F7D4', 
+            backgroundColor: 'rgba(208, 247, 212, 0.8)', 
             borderRadius: 35,
             marginHorizontal: 16,
             marginBottom: 16,
