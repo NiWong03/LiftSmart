@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
-import { FlatList, Modal, Switch, Text, TouchableOpacity, View, StyleSheet, Button} from 'react-native';
-import { AgendaEntry } from 'react-native-calendars';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Calendar, ICalendarEventBase, CalendarHeaderProps } from 'react-native-big-calendar'
-import EventModal from '@/components/eventModal';
 import EventModalComponent from '@/components/eventModal';
+import { ThemedView } from '@/components/ThemedView';
+import React, { useState } from 'react';
+import { StyleSheet } from 'react-native';
+import { Calendar } from 'react-native-big-calendar';
 
 
 
