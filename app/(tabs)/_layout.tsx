@@ -1,32 +1,75 @@
+import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
 import { useTheme } from 'react-native-paper';
-import { View } from 'react-native';
+
+const BlurTabBarBackground = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.blurContainer, { borderColor: colors.primary }]}>
+      {/* BlurView blurs everything behind it */}
+      <BlurView
+        style={styles.blurView}
+        intensity={30}
+        tint="light"
+      />
+      {/* Tab bar content renders on top of the blur */}
+    </View>
+  );
+};
+
+
+const styles = StyleSheet.create({
+  blurContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    borderTopWidth: 2,
+
+  },
+  blurView: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
+});
 
 export default function TabLayout() {
-  const theme = useTheme();
+  const { colors } = useTheme();
   return (
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarButton: HapticTab,
+          tabBarBackground: BlurTabBarBackground,
           tabBarStyle: {
             position: 'absolute',
-            backgroundColor: 'rgba(208, 247, 212, 0.8)', 
-            borderRadius: 35,
-            marginHorizontal: 16,
-            marginBottom: 16,
+            backgroundColor: 'transparent', 
+            bottom: 0,
+            left: 0,
+            right: 0,
             height: 70,
-            borderTopWidth: 0,
             paddingTop: 10,
+            paddingBottom: 16,
+            borderTopWidth: 1,
+            borderColor: 'black',
+            shadowColor: colors.outline,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+            marginBottom: 0,
           },
-          tabBarActiveTintColor: 'blue',
-          tabBarInactiveTintColor: '#333',
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.onSurfaceVariant,
         }}>
         <Tabs.Screen
           name="index"
