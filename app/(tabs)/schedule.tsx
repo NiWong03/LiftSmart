@@ -1,7 +1,8 @@
 import EventDetailCard from '@/components/EventDetailCard';
-import { ThemedView } from '@/components/ThemedView';
 import EventModalComponent from '@/components/eventModal';
-import React, { useState } from 'react';
+import { ThemedView } from '@/components/ThemedView';
+import { useWorkout } from '@/components/WorkoutContext';
+import React, { useMemo, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import { Button, Divider, Menu, useTheme } from 'react-native-paper';
@@ -9,21 +10,15 @@ import { Button, Divider, Menu, useTheme } from 'react-native-paper';
 const Schedule: React.FC = () => {  
   const { colors } = useTheme();
   const { height: screenHeight } = Dimensions.get('window');
+  const { events, addEvent, getWorkoutEvents } = useWorkout();
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'day'>('week');
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const [events, setEvents] = useState([
-    {
-      title: 'Gym session',
-      start: new Date(2025, 7, 5, 8, 0),
-      end: new Date(2025, 7, 5, 9, 0),
-    },
-    {
-      title: 'Meeting',
-      start: new Date(2025, 7, 6, 13, 45),
-      end: new Date(2025, 7, 6, 16, 30),
-    },
-  ]);
+  // Combine workout events with other events
+  const allEvents = useMemo(() => {
+    const workoutEvents = getWorkoutEvents();
+    return [...events, ...workoutEvents];
+  }, [events, getWorkoutEvents]);
 
   const calendarTheme = {
     palette: {
@@ -73,7 +68,7 @@ const Schedule: React.FC = () => {
   };
 
   const handleAddEvent = (event: {title: string, start: Date, end: Date}) => {
-    setEvents(prevEvents => [...prevEvents, event]);
+    addEvent({ ...event, type: 'other' });
   }
 
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -151,7 +146,7 @@ const Schedule: React.FC = () => {
           setDate(date);
           
         }}
-        events={events}
+        events={allEvents}
         height={screenHeight}
         onPressEvent={(event) => {
           // react-native-big-calendar passes event object
