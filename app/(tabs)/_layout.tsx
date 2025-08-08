@@ -52,7 +52,6 @@ export default function TabLayout() {
           tabBarBackground: BlurTabBarBackground,
           tabBarStyle: {
             position: 'absolute',
-            backgroundColor: 'transparent', 
             bottom: 0,
             left: 0,
             right: 0,
@@ -66,7 +65,7 @@ export default function TabLayout() {
             shadowOpacity: 0.1,
             shadowRadius: 8,
             elevation: 4,
-            marginBottom: 0,
+            marginBottom: 16,
           },
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.onSurfaceVariant,

@@ -11,6 +11,7 @@ import { Calendar } from 'react-native-big-calendar';
 
 
 
+
 const Schedule: React.FC = () => {  
   const [events, setEvents] = useState([
     {
