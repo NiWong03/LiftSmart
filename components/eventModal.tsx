@@ -1,12 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, TouchableOpacity, TextInput, StyleSheet, ScrollView, Text} from 'react-native';
-import DatePicker from 'react-native-date-picker'
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { setStatusBarNetworkActivityIndicatorVisible, setStatusBarTranslucent } from 'expo-status-bar';
-import { useSortedScreens } from 'expo-router/build/useScreens';
-import { startScreenTransition } from 'react-native-reanimated';
+import React, { useEffect, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 
 
 
