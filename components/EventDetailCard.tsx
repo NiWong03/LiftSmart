@@ -1,14 +1,8 @@
+import { useWorkout, type CalendarEvent } from '@/components/WorkoutContext';
 import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, Card, IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
-
-type CalendarEvent = {
-  title: string;
-  start: Date;
-  end: Date;
-
-};
+import { Button, Card, Chip, IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
 
 type EventDetailCardProps = {
   visible: boolean;
@@ -18,8 +12,11 @@ type EventDetailCardProps = {
 
 export default function EventDetailCard({ visible, event, onDismiss, }: EventDetailCardProps) {
   const { colors } = useTheme();
+  const { markWorkoutComplete } = useWorkout();
 
   if (!event) return null;
+
+  const isWorkoutEvent = event.type === 'workout' && event.workout;
 
   const formatDateTime = (d: Date) => {
     try {
@@ -49,14 +46,48 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
               <IconButton icon="clock" size={20} disabled />
               <Text style={{ color: colors.onSurfaceVariant }}>{formatDateTime(event.end)}</Text>
             </View>
+            
+            {isWorkoutEvent && event.workout && (
+              <>
+                <View style={styles.row}>
+                  <IconButton icon="dumbbell" size={20} disabled />
+                  <Text style={{ color: colors.onSurfaceVariant }}>
+                    {event.workout.exercises} exercises • {event.workout.duration}
+                  </Text>
+                </View>
+                <View style={styles.row}>
+                  <Chip 
+                    mode="outlined" 
+                    style={{ 
+                      backgroundColor: event.workout.completed ? colors.primaryContainer : colors.surfaceVariant 
+                    }}
+                  >
+                    {event.workout.completed ? 'Completed' : event.workout.difficulty}
+                  </Chip>
+                </View>
+              </>
+            )}
           </Card.Content>
           <Card.Actions style={{ justifyContent: 'flex-end' }}>
+            {isWorkoutEvent && event.workout && !event.workout.completed && (
+              <Button 
+                mode="outlined" 
+                onPress={() => {
+                  if (event.workoutId) {
+                    markWorkoutComplete(event.workoutId);
+                  }
+                  onDismiss();
+                }} 
+                icon="check"
+              >
+                Mark Complete
+              </Button>
+            )}
             <Button mode="contained" onPress={() => {
-              console.log('takes you to workout details but doesnt exist yet');
               onDismiss();
-              router.push('/(tabs)/explore');
-            }} icon="check">
-              Details
+              router.push('/(tabs)/plans');
+            }} icon={isWorkoutEvent ? "dumbbell" : "information"}>
+              {isWorkoutEvent ? 'View Workout' : 'Details'}
             </Button>
           </Card.Actions>
         </Card>

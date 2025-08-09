@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 
+import { WorkoutProvider } from '@/components/WorkoutContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const emeraldColors = {
@@ -173,14 +174,16 @@ export default function RootLayout() {
   const paperTheme = getTheme(colorScheme);
 
   return (
-    <PaperProvider theme={paperTheme}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </PaperProvider>
+    <WorkoutProvider>
+      <PaperProvider theme={paperTheme}>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </PaperProvider>
+    </WorkoutProvider>
   );
 }
