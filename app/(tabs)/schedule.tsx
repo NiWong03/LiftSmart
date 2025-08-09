@@ -1,3 +1,4 @@
+import EventModalComponent from '@/components/eventModal';
 import EventDetailCard from '@/components/EventDetailCard';
 import EventModalComponent from '@/components/eventModal';
 import { ThemedView } from '@/components/ThemedView';
