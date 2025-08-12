@@ -65,7 +65,7 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
                       if (event.workout?.completed) {
                         console.log('Complete chip touched');
                         if (event.workoutId) {
-                          const workoutId = event.workoutId; // workoutId is now string
+                          const workoutId = event.workoutId; 
                           Alert.alert(
                             'Mark workout as incomplete?',
                             'Are you sure you want to mark this workout as incomplete?',
