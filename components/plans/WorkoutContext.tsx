@@ -46,6 +46,7 @@ interface WorkoutContextType {
   addEvent: (event: CalendarEvent) => void;
   getWorkoutEvents: () => CalendarEvent[];
   markWorkoutComplete: (workoutId: string) => void;
+  markWorkoutIncomplete: (workoutId: string) => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -63,25 +64,15 @@ interface WorkoutProviderProps {
 }
 
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) => {
-  const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
-    name: "Plan Name",
-    duration: "6 weeks",
-    progress: "Week 3 of 6",
-    workoutsCompleted: 8,
-    totalWorkouts: 24,
-    difficulty: "Difficulty Load",
-    emoji: "💪"
-  });
-
   const [workouts, setWorkouts] = useState<Workout[]>([
     {
       id: '1',
       day: 'Monday',
-      date: '2025-08-05',
+      date: '2025-08-12',
       name: 'Push Day - Chest & Triceps',
       duration: 'est time',
       exercises: 6,
-      completed: true,
+      completed: false,
       difficulty: 'Hard',
       exercises_list: [
         { name: 'Bench Press', sets: '4 x 8-10', weight: '135 lbs' },
@@ -95,11 +86,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '2',
       day: 'Tuesday',
-      date: '2025-08-06',
+      date: '2025-08-13',
       name: 'Pull Day - Back & Biceps',
       duration: 'est time',
       exercises: 7,
-      completed: true,
+      completed: false,
       difficulty: 'Medium',
       exercises_list: [
         { name: 'Deadlifts', sets: '4 x 6-8', weight: '185 lbs' },
@@ -114,7 +105,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '3',
       day: 'Wednesday',
-      date: '2025-08-07',
+      date: '2025-08-14',
       name: 'Leg Day - Quads & Glutes',
       duration: 'est time',
       exercises: 6,
@@ -132,7 +123,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '4',
       day: 'Thursday',
-      date: '2025-08-08',
+      date: '2025-08-15',
       name: 'Upper Body Power',
       duration: 'est time',
       exercises: 5,
@@ -148,6 +139,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     }
   ]);
 
+  const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
+    name: "Plan Name",
+    duration: "6 weeks",
+    progress: "Week 3 of 6",
+    workoutsCompleted: 0,
+    totalWorkouts: workouts.length,
+    difficulty: "Difficulty Load",
+    emoji: "💪"
+  });
   const [events, setEvents] = useState<CalendarEvent[]>([
     {
       title: 'Meeting',
@@ -210,6 +210,20 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
   };
 
+  const markWorkoutIncomplete = (workoutId: string) => {
+  setWorkouts(prev => {
+    const updatedWorkouts = prev.map(workout =>
+      workout.id === workoutId ? { ...workout, completed: false } : workout
+    );
+    
+    const completedCount = updatedWorkouts.filter(w => w.completed).length;
+
+    setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
+
+    return updatedWorkouts;
+  });
+};
+
   const value: WorkoutContextType = {
     currentPlan,
     workouts,
@@ -218,7 +232,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     updateWorkouts,
     addEvent,
     getWorkoutEvents,
-    markWorkoutComplete
+    markWorkoutComplete,
+    markWorkoutIncomplete,
   };
 
   return (
