@@ -64,16 +64,6 @@ interface WorkoutProviderProps {
 }
 
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) => {
-  const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
-    name: "Plan Name",
-    duration: "6 weeks",
-    progress: "Week 3 of 6",
-    workoutsCompleted: 8,
-    totalWorkouts: 24,
-    difficulty: "Difficulty Load",
-    emoji: "💪"
-  });
-
   const [workouts, setWorkouts] = useState<Workout[]>([
     {
       id: '1',
@@ -149,6 +139,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     }
   ]);
 
+  const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
+    name: "Plan Name",
+    duration: "6 weeks",
+    progress: "Week 3 of 6",
+    workoutsCompleted: 0,
+    totalWorkouts: workouts.length,
+    difficulty: "Difficulty Load",
+    emoji: "💪"
+  });
   const [events, setEvents] = useState<CalendarEvent[]>([
     {
       title: 'Meeting',
@@ -169,7 +168,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     return workouts.map(workout => {
       const workoutDate = new Date(workout.date);
       const startTime = new Date(workoutDate);
-      startTime.setHours(20, 0, 0, 0); // Default start time 8:00 AM
+      startTime.setHours(8, 0, 0, 0); // Default start time 8:00 AM
       
       const durationMinutes = parseDuration(workout.duration);
       const endTime = new Date(startTime);

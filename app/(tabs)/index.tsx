@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { useWorkout, Workout } from '@/components/WorkoutContext'; 
+import { useWorkout, Workout } from '@/components/plans/WorkoutContext'; 
 
 
 const HomeScreen = () => {
   const theme = useTheme();
-  const { currentPlan,workouts } = useWorkout();
+  const { currentPlan, workouts } = useWorkout();
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   
   useEffect(
@@ -69,6 +69,49 @@ const HomeScreen = () => {
                   Goal Progress
                 </Text>
               </View>
+            </View>
+          </Surface>
+
+          {/* Current Plan Progress Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
+                Current Plan Progress
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                {currentPlan.name} — {currentPlan.workoutsCompleted} of {currentPlan.totalWorkouts} workouts completed
+              </Text>
+              {/* Progress Bar Background */}
+              <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.onSurface + '30' }]}>
+                {/* Progress Bar Fill */}
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { 
+                      backgroundColor: theme.colors.primary,
+                      width: `${(currentPlan.workoutsCompleted / currentPlan.totalWorkouts) * 100}%`,
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+          </Surface>
+
+          {/* Current Plan Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 8 }}>
+                Current Plan
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Name: {currentPlan.name}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Duration: {currentPlan.duration}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Difficulty: {currentPlan.difficulty}
+              </Text>
             </View>
           </Surface>
 
@@ -380,4 +423,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
+  progressBarBackground: {
+  height: 12,
+  borderRadius: 8,
+  overflow: 'hidden',
+  width: '100%',
+  marginBottom: 12,
+},
+progressBarFill: {
+  height: '100%',
+  borderRadius: 8,
+},
 });
