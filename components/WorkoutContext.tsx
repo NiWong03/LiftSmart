@@ -46,6 +46,7 @@ interface WorkoutContextType {
   addEvent: (event: CalendarEvent) => void;
   getWorkoutEvents: () => CalendarEvent[];
   markWorkoutComplete: (workoutId: string) => void;
+  markWorkoutIncomplete: (workoutId: string) => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -77,11 +78,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '1',
       day: 'Monday',
-      date: '2025-08-05',
+      date: '2025-08-12',
       name: 'Push Day - Chest & Triceps',
       duration: '45 min',
       exercises: 6,
-      completed: true,
+      completed: false,
       difficulty: 'Hard',
       exercises_list: [
         { name: 'Bench Press', sets: '4 x 8-10', weight: '135 lbs' },
@@ -95,11 +96,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '2',
       day: 'Tuesday',
-      date: '2025-08-06',
+      date: '2025-08-13',
       name: 'Pull Day - Back & Biceps',
       duration: '50 min',
       exercises: 7,
-      completed: true,
+      completed: false,
       difficulty: 'Medium',
       exercises_list: [
         { name: 'Deadlifts', sets: '4 x 6-8', weight: '185 lbs' },
@@ -114,7 +115,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '3',
       day: 'Wednesday',
-      date: '2025-08-07',
+      date: '2025-08-14',
       name: 'Leg Day - Quads & Glutes',
       duration: '55 min',
       exercises: 6,
@@ -132,7 +133,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '4',
       day: 'Thursday',
-      date: '2025-08-08',
+      date: '2025-08-15',
       name: 'Upper Body Power',
       duration: '40 min',
       exercises: 5,
@@ -168,7 +169,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     return workouts.map(workout => {
       const workoutDate = new Date(workout.date);
       const startTime = new Date(workoutDate);
-      startTime.setHours(8, 0, 0, 0); // Default start time 8:00 AM
+      startTime.setHours(20, 0, 0, 0); // Default start time 8:00 AM
       
       const durationMinutes = parseDuration(workout.duration);
       const endTime = new Date(startTime);
@@ -210,6 +211,20 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
   };
 
+  const markWorkoutIncomplete = (workoutId: string) => {
+  setWorkouts(prev => {
+    const updatedWorkouts = prev.map(workout =>
+      workout.id === workoutId ? { ...workout, completed: false } : workout
+    );
+    
+    const completedCount = updatedWorkouts.filter(w => w.completed).length;
+
+    setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
+
+    return updatedWorkouts;
+  });
+};
+
   const value: WorkoutContextType = {
     currentPlan,
     workouts,
@@ -218,7 +233,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     updateWorkouts,
     addEvent,
     getWorkoutEvents,
-    markWorkoutComplete
+    markWorkoutComplete,
+    markWorkoutIncomplete,
   };
 
   return (
