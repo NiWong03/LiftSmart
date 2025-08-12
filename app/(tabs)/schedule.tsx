@@ -1,7 +1,7 @@
 import EventDetailCard from '@/components/EventDetailCard';
 import EventModalComponent from '@/components/eventModal';
+import { useWorkout } from '@/components/plans/WorkoutContext';
 import { ThemedView } from '@/components/ThemedView';
-import { useWorkout } from '@/components/WorkoutContext';
 import React, { useMemo, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
