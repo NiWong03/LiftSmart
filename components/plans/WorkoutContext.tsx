@@ -14,8 +14,8 @@ export interface Workout {
   duration: string;
   exercises: number;
   completed: boolean;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  exercises_list: Exercise[];
+  difficulty: string;
+    exercises_list: Exercise[];
 }
 
 export interface WorkoutPlan {
