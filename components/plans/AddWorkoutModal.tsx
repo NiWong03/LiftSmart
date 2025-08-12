@@ -92,11 +92,13 @@ export default function AddWorkoutModal({
   const onChangeDate = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || new Date();
     setShowDatePicker(false);
-    
     // Date spinner alr exists, this reformats to show specific day
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = dayNames[currentDate.getDay()];
-    updateWorkout({ day: dayOfWeek });
+    updateWorkout({ 
+      day: dayOfWeek,
+      date: currentDate.toISOString().split('T')[0] 
+    });
   };
 
   const updateWorkout = (updates: Partial<NewWorkout>) => {
