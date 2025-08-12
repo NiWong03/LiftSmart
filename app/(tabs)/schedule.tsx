@@ -1,6 +1,6 @@
 import EventDetailCard from '@/components/EventDetailCard';
 import EventModalComponent from '@/components/eventModal';
-import { useWorkout } from '@/components/plans/WorkoutContext';
+import { useWorkout} from '@/components/plans/WorkoutContext';
 import { ThemedView } from '@/components/ThemedView';
 import React, { useMemo, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
@@ -14,7 +14,7 @@ const Schedule: React.FC = () => {
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'day'>('week');
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Combine workout events with other events
+
   const allEvents = useMemo(() => {
     const workoutEvents = getWorkoutEvents();
     return [...events, ...workoutEvents];

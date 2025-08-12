@@ -15,6 +15,8 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
   const { markWorkoutComplete } = useWorkout();
   const styles = createPlanStyles(theme);
 
+
+//   instead of formatting here, change date to diff type?
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -42,7 +44,11 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
             {workout.name}
           </Text>
           <Text variant="bodySmall" style={[styles.surfaceVariantText, { marginTop: 2 }]}>
-          {formatDate(workout.date)} 
+          {new Date(workout.date).toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+          })} 
           </Text>
           <View style={styles.workoutMeta}>
             <Text variant="bodySmall" style={styles.surfaceVariantText}>
