@@ -29,7 +29,7 @@ const PlansScreen = () => {
     name: '',
     startTime: '08:00',
     endTime: '09:00',
-    difficulty: 'Medium' as 'Easy' | 'Medium' | 'Hard',
+    difficulty: "AI Pending",
     exercises_list: [] as any[]
   });
 
