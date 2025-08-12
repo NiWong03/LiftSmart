@@ -1,4 +1,3 @@
-import EventModalComponent from '@/components/eventModal';
 import EventDetailCard from '@/components/EventDetailCard';
 import EventModalComponent from '@/components/eventModal';
 import { useWorkout } from '@/components/plans/WorkoutContext';
