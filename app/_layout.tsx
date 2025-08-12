@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 
-import { WorkoutProvider } from '@/components/WorkoutContext';
+import { WorkoutProvider } from '@/components/plans/WorkoutContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const emeraldColors = {

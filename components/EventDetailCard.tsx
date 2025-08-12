@@ -1,4 +1,4 @@
-import { useWorkout, type CalendarEvent } from '@/components/WorkoutContext';
+import { useWorkout, type CalendarEvent } from '@/components/plans/WorkoutContext';
 import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
