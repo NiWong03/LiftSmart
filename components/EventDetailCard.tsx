@@ -1,7 +1,7 @@
 import { useWorkout, type CalendarEvent } from '@/components/WorkoutContext';
 import { router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 import { Button, Card, Chip, IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
 
 type EventDetailCardProps = {
@@ -12,7 +12,7 @@ type EventDetailCardProps = {
 
 export default function EventDetailCard({ visible, event, onDismiss, }: EventDetailCardProps) {
   const { colors } = useTheme();
-  const { markWorkoutComplete } = useWorkout();
+  const { markWorkoutComplete, markWorkoutIncomplete } = useWorkout();
 
   if (!event) return null;
 
@@ -60,6 +60,30 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
                     mode="outlined" 
                     style={{ 
                       backgroundColor: event.workout.completed ? colors.primaryContainer : colors.surfaceVariant 
+                    }}
+                    onPress={() => {
+                      if (event.workout?.completed) {
+                        console.log('Complete chip touched');
+                        if (event.workoutId) {
+                          const workoutId = event.workoutId; // workoutId is now string
+                          Alert.alert(
+                            'Mark workout as incomplete?',
+                            'Are you sure you want to mark this workout as incomplete?',
+                            [
+                              { text: 'No', onPress: () => console.log('Canceled'), style: 'cancel' },
+                              { 
+                                text: 'Yes', 
+                                onPress: () => {
+                                  markWorkoutIncomplete(workoutId);
+                                  onDismiss();
+                                } 
+                              },
+                            ],
+                            { cancelable: false }
+                          );
+
+                        }
+                      }
                     }}
                   >
                     {event.workout.completed ? 'Completed' : event.workout.difficulty}
