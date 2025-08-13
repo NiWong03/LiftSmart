@@ -9,7 +9,7 @@ interface NewWorkout {
   name: string;
   startTime: string;
   endTime: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficulty: string;
   exercises_list: any[];
 }
 
@@ -22,7 +22,7 @@ interface AddWorkoutModalProps {
 }
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const difficulties = ['Easy', 'Medium', 'Hard'];
+const difficulties = "AI Pending";
 
 export default function AddWorkoutModal({ 
   visible, 
@@ -136,38 +136,6 @@ export default function AddWorkoutModal({
                     mode="outlined"
                   />
                 </View>
-              </View>
-
-              {/* Difficulty */}
-              <View style={styles.formField}>
-                <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
-                  Difficulty
-                </Text>
-                <Menu
-                  visible={showDifficultyMenu}
-                  onDismiss={() => setShowDifficultyMenu(false)}
-                  anchor={
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowDifficultyMenu(true)}
-                      style={styles.dropdownButton}
-                      contentStyle={styles.dropdownContent}
-                    >
-                      {newWorkout.difficulty}
-                    </Button>
-                  }
-                >
-                  {difficulties.map((difficulty) => (
-                    <Menu.Item
-                      key={difficulty}
-                      onPress={() => {
-                        updateWorkout({ difficulty: difficulty as 'Easy' | 'Medium' | 'Hard' });
-                        setShowDifficultyMenu(false);
-                      }}
-                      title={difficulty}
-                    />
-                  ))}
-                </Menu>
               </View>
 
               <View style={styles.formField}>
