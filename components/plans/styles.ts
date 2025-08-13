@@ -253,4 +253,10 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   chipTextPrimary: {
     color: theme.colors.primary,
   },
+  errorText: {
+    color: theme.colors.error, // Use error color from theme
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 10,
+  },
 });

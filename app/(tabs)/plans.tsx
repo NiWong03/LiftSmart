@@ -60,7 +60,7 @@ const PlansScreen = () => {
     });
   };
 
-  // ade workout submission
+  // add workout submission
   const handleSubmitWorkout = () => {
     if (!newWorkout.name.trim()) return;
 
@@ -68,7 +68,7 @@ const PlansScreen = () => {
       id: Date.now().toString(),
       name: newWorkout.name,
       day: newWorkout.day,
-      date: newWorkout.date,
+      date: new Date(newWorkout.date),
       exercises: newWorkout.exercises_list.length,
       duration: "est time",
       difficulty: newWorkout.difficulty,

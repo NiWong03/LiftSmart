@@ -9,7 +9,7 @@ export interface Exercise {
 export interface Workout {
   id: string;
   day: string;
-  date: string;
+  date: Date;
   name: string;
   duration: string;
   exercises: number;
@@ -68,7 +68,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '1',
       day: 'Monday',
-      date: '2025-08-12',
+      date: new Date('2025-08-12'),
       name: 'Push Day - Chest & Triceps',
       duration: 'est time',
       exercises: 6,
@@ -86,7 +86,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '2',
       day: 'Tuesday',
-      date: '2025-08-13',
+      date: new Date('2025-08-13'),
       name: 'Pull Day - Back & Biceps',
       duration: 'est time',
       exercises: 7,
@@ -105,7 +105,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '3',
       day: 'Wednesday',
-      date: '2025-08-14',
+      date: new Date('2025-08-14'),
       name: 'Leg Day - Quads & Glutes',
       duration: 'est time',
       exercises: 6,
@@ -123,7 +123,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     {
       id: '4',
       day: 'Thursday',
-      date: '2025-08-15',
+      date: new Date('2025-08-15'),
       name: 'Upper Body Power',
       duration: 'est time',
       exercises: 5,
