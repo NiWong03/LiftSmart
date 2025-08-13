@@ -1,10 +1,31 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { useWorkout, Workout } from '@/components/plans/WorkoutContext'; 
+
 
 const HomeScreen = () => {
   const theme = useTheme();
-
+  const { currentPlan, workouts } = useWorkout();
+  const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
+  
+  useEffect(
+    () => {
+      console.log(currentPlan.workoutsCompleted)
+      // console.log('Reloading');
+      const now = new Date();
+      const chosenWorkout = workouts
+        .filter(w => 
+          new Date(w.date) > now && 
+          new Date(w.date).getDate() === now.getDate() && 
+          w.completed === false 
+        )
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+      // console.log('Upcoming workout:', chosenWorkout);
+      setUpcomingWorkout(chosenWorkout)
+    }
+  , [workouts])
+  
   return (
     <View style={styles.mainContainer}>
       <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -51,68 +72,129 @@ const HomeScreen = () => {
             </View>
           </Surface>
 
+          {/* Current Plan Progress Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
+                Current Plan Progress
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                {currentPlan.name} — {currentPlan.workoutsCompleted} of {currentPlan.totalWorkouts} workouts completed
+              </Text>
+              {/* Progress Bar Background */}
+              <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.onSurface + '30' }]}>
+                {/* Progress Bar Fill */}
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { 
+                      backgroundColor: theme.colors.primary,
+                      width: `${(currentPlan.workoutsCompleted / currentPlan.totalWorkouts) * 100}%`,
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+          </Surface>
+
+          {/* Current Plan Card */}
+          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.cardContent}>
+              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 8 }}>
+                Current Plan
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Name: {currentPlan.name}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Duration: {currentPlan.duration}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                Difficulty: {currentPlan.difficulty}
+              </Text>
+            </View>
+          </Surface>
+
           {/* Today's Workout Card */}
           <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
             <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
                 <View>
-                  <Text variant="titleLarge" style={{ color: '#666666' , fontWeight: 'bold' }}>
+                  <Text variant="titleLarge" style={{ color: '#666666', fontWeight: 'bold' }}>
                     Today's Focus
                   </Text>
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Upper Body Strength
+                    {upcomingWorkout ? upcomingWorkout.name : 'No workout scheduled for today'}
                   </Text>
                 </View>
-                <Avatar.Icon 
-                  size={48} 
-                  icon="dumbbell" 
-                  style={{borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                <Avatar.Icon
+                  size={48}
+                  icon="dumbbell"
+                  style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
                   color={theme.colors.onPrimaryContainer}
                 />
               </View>
-              
-              <View style={styles.workoutDetails}>
-                <View style={styles.detailItem}>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Duration
-                  </Text>
-                  <Text variant="titleLarge" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>
-                    45 min
-                  </Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Text variant="bodySmall" style={{ paddingVertical: 4, color: theme.colors.onSurfaceVariant }}>
-                    Intensity
-                  </Text>
-                  <Chip 
-                    mode="flat" 
-                    textStyle={{ color: theme.colors.onPrimaryContainer }}
-                    style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+
+              {upcomingWorkout ? (
+                <>
+                  {/* Workout details */}
+                  <View style={styles.workoutDetails}>
+                    <View style={styles.detailItem}>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                        Duration
+                      </Text>
+                      <Text variant="titleLarge" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>
+                        {upcomingWorkout.duration}
+                      </Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Text variant="bodySmall" style={{ paddingVertical: 4, color: theme.colors.onSurfaceVariant }}>
+                        Intensity
+                      </Text>
+                      <Chip
+                        mode="flat"
+                        textStyle={{ color: theme.colors.onPrimaryContainer }}
+                        style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                      >
+                        {upcomingWorkout.difficulty}
+                      </Chip>
+                    </View>
+                  </View>
+
+                  {/* Action buttons */}
+                  <View style={styles.cardActions}>
+                    <Button
+                      mode="contained"
+                      onPress={() => console.log('Start workout')}
+                      style={styles.primaryButton}
+                      contentStyle={styles.buttonContent}
+                    >
+                      Start Workout
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      onPress={() => console.log('View details')}
+                      style={styles.secondaryButton}
+                    >
+                      View Details
+                    </Button>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.cardActions}>
+                  <Button
+                    mode="contained"
+                    onPress={() => console.log('Navigate to add workout screen')}
+                    style={styles.primaryButton}
+                    contentStyle={styles.buttonContent}
                   >
-                    Moderate
-                  </Chip>
+                    Add a Workout
+                  </Button>
                 </View>
-              </View>
-              
-              <View style={styles.cardActions}>
-                <Button 
-                  mode="contained" 
-                  onPress={() => console.log('Start workout')}
-                  style={styles.primaryButton}
-                  contentStyle={styles.buttonContent}
-                >
-                  Start Workout
-                </Button>
-                <Button 
-                  mode="outlined" 
-                  onPress={() => console.log('View details')}
-                  style={styles.secondaryButton}
-                >
-                  View Details
-                </Button>
-              </View>
+              )}
             </View>
           </Surface>
+
 
           {/* Quick Actions */}
           <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
@@ -341,4 +423,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
+  progressBarBackground: {
+  height: 12,
+  borderRadius: 8,
+  overflow: 'hidden',
+  width: '100%',
+  marginBottom: 12,
+},
+progressBarFill: {
+  height: '100%',
+  borderRadius: 8,
+},
 });
