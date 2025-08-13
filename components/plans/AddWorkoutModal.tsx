@@ -1,6 +1,7 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
-import { Button, Divider, IconButton, Menu, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
 
 interface NewWorkout {
@@ -24,6 +25,15 @@ interface AddWorkoutModalProps {
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const difficulties = "AI Pending";
 
+// Add a helper function to format time in 12-hour format
+const formatTime12Hour = (date: Date) => {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 export default function AddWorkoutModal({ 
   visible, 
   newWorkout, 
@@ -33,8 +43,63 @@ export default function AddWorkoutModal({
 }: AddWorkoutModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const [showDayMenu, setShowDayMenu] = useState(false);
-  const [showDifficultyMenu, setShowDifficultyMenu] = useState(false);
+
+  const [startTime, setStartTime] = useState(new Date());
+  const [showStartPicker, setShowStartPicker] = useState(false);
+
+  const [endTime, setEndTime] = useState(new Date());
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  // Add state for time validation
+  const [timeError, setTimeError] = useState(false);
+
+  // Add validation function
+  const validateTimes = (start: Date, end: Date) => {
+    const startMinutes = start.getHours() * 60 + start.getMinutes();
+    const endMinutes = end.getHours() * 60 + end.getMinutes();
+    
+    if (endMinutes <= startMinutes) {
+        setTimeError(true);
+    } else {
+        setTimeError(false);
+    }
+  };
+
+  // Day Picker
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+
+
+
+//   Start time picker
+  const onChangeStartTime = (event: any, selectedTime?: Date) => {
+    const currentTime = selectedTime || startTime;
+    setShowStartPicker(false);
+    setStartTime(currentTime);
+    updateWorkout({ startTime: formatTime12Hour(currentTime) });
+    validateTimes(currentTime, endTime);
+  };
+//  End time picker
+  const onChangeEndTime = (event: any, selectedTime?: Date) => {
+    const currentTime = selectedTime || endTime;
+    setShowEndPicker(false);
+    setEndTime(currentTime);
+    updateWorkout({ endTime: formatTime12Hour(currentTime) });
+    validateTimes(startTime, currentTime);
+  };
+
+  // Day of the week picker, couldnt do just day picker spinner
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(false);
+    // Date spinner alr exists, this reformats to show specific day
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[currentDate.getDay()];
+    updateWorkout({ 
+      day: dayOfWeek,
+      date: currentDate.toISOString().split('T')[0] 
+    });
+  };
 
   const updateWorkout = (updates: Partial<NewWorkout>) => {
     onWorkoutChange({ ...newWorkout, ...updates });
@@ -83,60 +148,65 @@ export default function AddWorkoutModal({
                 <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
                   Day of Week
                 </Text>
-                <Menu
-                  visible={showDayMenu}
-                  onDismiss={() => setShowDayMenu(false)}
-                  anchor={
-                    <Button
-                      mode="outlined"
-                      onPress={() => setShowDayMenu(true)}
-                      style={styles.dropdownButton}
-                      contentStyle={styles.dropdownContent}
-                    >
-                      {newWorkout.day}
-                    </Button>
-                  }
+                <Button
+                  mode="outlined"
+                  onPress={() => setShowDatePicker(true)}
+                  style={styles.dropdownButton}
+                  contentStyle={styles.dropdownContent}
                 >
-                  {daysOfWeek.map((day) => (
-                    <Menu.Item
-                      key={day}
-                      onPress={() => {
-                        updateWorkout({ day });
-                        setShowDayMenu(false);
-                      }}
-                      title={day}
-                    />
-                  ))}
-                </Menu>
+                  {newWorkout.day}
+                </Button>
+                
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={new Date()}
+                    mode="date"
+                    display="spinner"
+                    onChange={onChangeDate}
+                  />
+                )}
               </View>
 
-              {/* Start and End Time */}
-              <View style={styles.timeRow}>
-                <View style={[styles.formField, { flex: 1, marginRight: 8 }]}>
-                  <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
-                    Start Time
-                  </Text>
-                  <TextInput
-                    value={newWorkout.startTime}
-                    onChangeText={(text) => updateWorkout({ startTime: text })}
-                    placeholder="08:00"
-                    style={styles.textInput}
-                    mode="outlined"
+              {/*----------- Start Time----------- */}
+              <View style={styles.formField}>
+                <Button onPress={() => setShowStartPicker(true)} mode="outlined">
+                  Start Time: {formatTime12Hour(startTime)}
+                </Button>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={startTime}
+                    mode="time"
+                    is24Hour={false}
+                    display="spinner"
+                    onChange={onChangeStartTime}
                   />
-                </View>
-                <View style={[styles.formField, { flex: 1, marginLeft: 8 }]}>
-                  <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
-                    End Time
-                  </Text>
-                  <TextInput
-                    value={newWorkout.endTime}
-                    onChangeText={(text) => updateWorkout({ endTime: text })}
-                    placeholder="09:00"
-                    style={styles.textInput}
-                    mode="outlined"
-                  />
-                </View>
+                )}
               </View>
+
+              {/*----------- End Time----------- */}
+
+              <View style={styles.formField}>
+                <Button onPress={() => setShowEndPicker(true)} mode="outlined">
+                  End Time: {formatTime12Hour(endTime)}
+                </Button>
+                
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={endTime}
+                    mode="time"
+                    is24Hour={false}
+                    display="spinner"
+                    onChange={onChangeEndTime}
+                  />
+                )}
+                
+                {timeError && (
+                  <Text style={styles.errorText}>
+                    *End time cannot be before start time*
+                  </Text>
+                )}
+              </View>
+
 
               <View style={styles.formField}>
                 <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>

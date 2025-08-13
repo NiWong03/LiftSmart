@@ -1,4 +1,5 @@
 import EventDetailCard from '@/components/EventDetailCard';
+import EventModalComponent from '@/components/eventModal';
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import { useWorkout } from '@/components/plans/WorkoutContext';
 import { ThemedView } from '@/components/ThemedView';
@@ -23,7 +24,7 @@ const Schedule: React.FC = () => {
     exercises_list: [] as any[]
   });
 
-  // Combine workout events with other events
+
   const allEvents = useMemo(() => {
     const workoutEvents = getWorkoutEvents();
     return [...events, ...workoutEvents];
