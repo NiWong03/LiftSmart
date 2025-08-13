@@ -1,8 +1,9 @@
 import { useWorkout } from '@/components/plans/WorkoutContext';
-import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
+import React, { useState } from 'react';
+import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 
 interface CurrentPlanOverviewProps {
   selectedEmoji: string;
@@ -13,6 +14,10 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
   const theme = useTheme();
   const { currentPlan } = useWorkout();
   const styles = createPlanStyles(theme);
+
+    // Plan Details Modal--------------------------------
+    const [showPlanDetails, setShowPlanDetails] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(currentPlan);
 
   return (
     <Surface style={styles.planOverviewContainer} elevation={2}>
@@ -62,12 +67,17 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         <Button 
           mode="outlined" 
           style={[styles.secondaryButton, { flex: 1 }]}
-          onPress={() => console.log('View details')}
+          onPress={() => setShowPlanDetails(true)}
           icon="information-outline"
         >
           Details
         </Button>
       </View>
+      <PlanDetailsModal
+        visible={showPlanDetails}
+        onDismiss={() => setShowPlanDetails(false)}
+        plan={selectedPlan}
+      />
     </Surface>
   );
 }
