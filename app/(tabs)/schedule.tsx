@@ -1,5 +1,5 @@
 import EventDetailCard from '@/components/EventDetailCard';
-import EventModalComponent from '@/components/eventModal';
+import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import { useWorkout } from '@/components/plans/WorkoutContext';
 import { ThemedView } from '@/components/ThemedView';
 import React, { useMemo, useState } from 'react';
@@ -13,6 +13,15 @@ const Schedule: React.FC = () => {
   const { events, addEvent, getWorkoutEvents } = useWorkout();
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'day'>('week');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [newWorkout, setNewWorkout] = useState({
+    day: 'Monday',
+    date: new Date().toISOString().split('T')[0],
+    name: '',
+    startTime: '8:00',
+    endTime: '9:00',
+    difficulty: 'AI Pending',
+    exercises_list: [] as any[]
+  });
 
   // Combine workout events with other events
   const allEvents = useMemo(() => {
@@ -72,7 +81,6 @@ const Schedule: React.FC = () => {
   }
 
   const [isModalVisible, setIsModalVisible] = useState(false)
-  const [date, setDate] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<{ title: string; start: Date; end: Date } | null>(null)
   const [isDetailVisible, setIsDetailVisible] = useState(false)
 
@@ -85,7 +93,17 @@ const Schedule: React.FC = () => {
     }
   };
 
-  
+  const handleWorkoutChange = (workout: {
+    day: string;
+    date: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+    difficulty: string;
+    exercises_list: any[];
+  }) => {
+    setNewWorkout(workout);
+  };
 
   return (
     <ThemedView style={styles.calendarContainer}>
@@ -143,7 +161,7 @@ const Schedule: React.FC = () => {
           const fullMonthName = date.toLocaleDateString('default', {month: 'long'})
           console.log('you pressed:', fullMonthName, date.getDate(), "at", date.getHours());
           setIsModalVisible(true);
-          setDate(date);
+          
           
         }}
         events={allEvents}
@@ -159,15 +177,19 @@ const Schedule: React.FC = () => {
         theme={calendarTheme}
       />
 
-      <EventModalComponent 
-        isModalVisible={isModalVisible}
-        setIsModalVisible={setIsModalVisible}
-        date={date}
-        setDate={setDate}
-        onAddEvent={handleAddEvent}
+      <AddWorkoutModal
+        visible={isModalVisible}
+        onDismiss={() => setIsModalVisible(false)}
+        newWorkout={newWorkout}
+        onWorkoutChange={handleWorkoutChange}
+        onSubmit={() => {
+          // Handle workout submission logic here
+          setIsModalVisible(false);
+        }}
       />
 
       <EventDetailCard
+
         visible={isDetailVisible}
         event={selectedEvent}
         onDismiss={() => setIsDetailVisible(false)}
