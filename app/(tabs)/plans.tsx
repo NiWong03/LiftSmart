@@ -1,6 +1,7 @@
 import AddPlanModal from '@/components/plans/AddPlanModal';
 import AllPlansCard from '@/components/plans/AllPlansCard';
 import CurrentPlanOverview from '@/components/plans/CurrentPlanOverview';
+import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import EmojiPicker from '@/components/plans/EmojiPicker';
 import { createPlanStyles } from '@/components/plans/styles';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';

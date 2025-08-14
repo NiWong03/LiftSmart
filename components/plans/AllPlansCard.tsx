@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Card, Divider, Text, useTheme } from 'react-native-paper';
-import { useWorkout } from './WorkoutContext';
+import { Button, Card, Divider, Text, useTheme } from 'react-native-paper';
+import PlanDetailsModal from './PlanDetailsModal';
+import { useWorkout, WorkoutPlan } from './WorkoutContext';
 import { createPlanStyles } from './styles';
 
 export default function PlanListCard() {
   const theme = useTheme();
   const { allPlans } = useWorkout();
   const styles = createPlanStyles(theme);
+  
+
+  const [showPlanDetails, setShowPlanDetails] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<WorkoutPlan | null>(null);
+
+  const handleShowDetails = (plan: WorkoutPlan) => {
+    setSelectedPlan(plan);
+    setShowPlanDetails(true);
+  };
 
   return (
     <Card style={[styles.workoutCard, { marginBottom: 16 }]} mode="outlined">
@@ -30,7 +40,7 @@ export default function PlanListCard() {
                   alignItems: 'center',
                   paddingVertical: 8 
                 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                     <Text variant="bodyMedium" style={styles.surfaceText}>
                       {plan.name}
                     </Text>
@@ -40,9 +50,15 @@ export default function PlanListCard() {
                       </Text>
                     )}
                   </View>
-                  <Text variant="bodySmall" style={styles.surfaceVariantText}>
-                    ID: {plan.id}
-                  </Text>
+                  <Button
+                    mode="outlined"
+                    compact
+                    onPress={() => handleShowDetails(plan)}
+                    icon="information-outline"
+                    style={{ borderRadius: 12 }}
+                  >
+                    Details
+                  </Button>
                 </View>
                 {index < allPlans.length - 1 && <Divider style={{ marginVertical: 4 }} />}
               </View>
@@ -50,6 +66,14 @@ export default function PlanListCard() {
           </ScrollView>
         )}
       </Card.Content>
+      
+      {selectedPlan && (
+        <PlanDetailsModal
+          visible={showPlanDetails}
+          onDismiss={() => setShowPlanDetails(false)}
+          plan={selectedPlan}
+        />
+      )}
     </Card>
   );
 }

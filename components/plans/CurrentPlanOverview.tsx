@@ -123,6 +123,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
                 </> 
               ) : null}
                <View style={styles.planActions}>
+      </View>
         <Button 
           mode="contained" 
           style={[styles.primaryButton, { flex: 1 }]}
@@ -131,16 +132,15 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         >
           Continue Plan
         </Button>
+            </View>
         <Button 
           mode="outlined" 
-          style={[styles.secondaryButton, { flex: 1 }]}
+          style={[styles.secondaryButton, { flex: 1, marginTop: 16 }]}
           onPress={() => setShowPlanDetails(true)}
           icon="information-outline"
         >
           Details
         </Button>
-      </View>
-            </View>
       
       <PlanDetailsModal
         visible={showPlanDetails}
