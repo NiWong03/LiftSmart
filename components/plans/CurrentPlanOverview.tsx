@@ -1,19 +1,41 @@
-import { useWorkout } from '@/components/plans/WorkoutContext';
-import { TouchableOpacity, View } from 'react-native';
-import { Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
-import React, { useState } from 'react';
 import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
+import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import React, { useEffect, useState } from 'react';
+import { TouchableOpacity, View } from 'react-native';
+import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { createPlanStyles } from './styles';
+
 
 interface CurrentPlanOverviewProps {
   selectedEmoji: string;
   onEmojiPress: () => void;
 }
 
+
+
 export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: CurrentPlanOverviewProps) {
   const theme = useTheme();
-  const { currentPlan } = useWorkout();
+  const { currentPlan, workouts } = useWorkout();
   const styles = createPlanStyles(theme);
+  const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
+  
+
+  useEffect(
+    () => {
+      console.log(currentPlan.workoutsCompleted)
+      // console.log('Reloading');
+      const now = new Date();
+      const chosenWorkout = workouts
+        .filter(w => 
+          new Date(w.date) > now && 
+          new Date(w.date).getDate() === now.getDate() && 
+          w.completed === false 
+        )
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+      // console.log('Upcoming workout:', chosenWorkout);
+      setUpcomingWorkout(chosenWorkout)
+    }
+  , [workouts])
 
     // Plan Details Modal--------------------------------
     const [showPlanDetails, setShowPlanDetails] = useState(false);
@@ -27,8 +49,8 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
             {currentPlan.name}
           </Text>
           <Text variant="bodyMedium" style={[styles.surfaceVariantText, { marginTop: 4 }]}>
-            {currentPlan.progress} • {currentPlan.duration}
-          </Text>
+            Progress bar here • {currentPlan.duration} weeks
+          </Text> 
           <View style={styles.planBadges}>
             <Chip mode="outlined" style={{ marginRight: 8 }}>
               {currentPlan.difficulty}
@@ -54,8 +76,53 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
       </View>
       
       <Divider style={{ marginVertical: 16 }} />
-      
-      <View style={styles.planActions}>
+
+      <View style={styles.planFocusContainer}>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20,}}>
+                <View>
+                  <Text variant="titleLarge" style={{ color: '#666666', fontWeight: 'bold' }}>
+                    Today's Focus
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    {upcomingWorkout ? upcomingWorkout.name : 'No workout scheduled for today'}
+                  </Text>
+                </View>
+                <Avatar.Icon
+                  size={48}
+                  icon="dumbbell"
+                  style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                  color={theme.colors.onPrimaryContainer}
+                />
+              </View>
+
+              {upcomingWorkout ? (
+                <>
+                  {/* Workout details */}
+                  <View style={styles.workoutDetails}>
+                    <View style={{alignItems: 'center'}}>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                        Duration
+                      </Text>
+                      <Text variant="titleLarge" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>
+                        {upcomingWorkout.duration}
+                      </Text>
+                    </View>
+                    <View style={{alignItems: 'center'}}>
+                      <Text variant="bodySmall" style={{ paddingVertical: 4, color: theme.colors.onSurfaceVariant }}>
+                        Intensity
+                      </Text>
+                      <Chip
+                        mode="flat"
+                        textStyle={{ color: theme.colors.onPrimaryContainer }}
+                        style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
+                      >
+                        {upcomingWorkout.difficulty}
+                      </Chip>
+                    </View>
+                  </View>
+                </> 
+              ) : null}
+               <View style={styles.planActions}>
         <Button 
           mode="contained" 
           style={[styles.primaryButton, { flex: 1 }]}
@@ -73,6 +140,8 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
           Details
         </Button>
       </View>
+            </View>
+      
       <PlanDetailsModal
         visible={showPlanDetails}
         onDismiss={() => setShowPlanDetails(false)}
