@@ -1,7 +1,8 @@
-import React, {useEffect, useState} from 'react';
+import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { useWorkout, Workout } from '@/components/plans/WorkoutContext'; 
 
 
 const HomeScreen = () => {
@@ -165,18 +166,11 @@ const HomeScreen = () => {
                   <View style={styles.cardActions}>
                     <Button
                       mode="contained"
-                      onPress={() => console.log('Start workout')}
+                      onPress={() => router.push('/workout')}
                       style={styles.primaryButton}
                       contentStyle={styles.buttonContent}
                     >
                       Start Workout
-                    </Button>
-                    <Button
-                      mode="outlined"
-                      onPress={() => console.log('View details')}
-                      style={styles.secondaryButton}
-                    >
-                      View Details
                     </Button>
                   </View>
                 </>

@@ -84,6 +84,13 @@ export default function TabLayout() {
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
           }}
         />
+          <Tabs.Screen
+            name="workout"
+            options={{
+              title: 'Workout',
+              tabBarIcon: ({ color }) => <IconSymbol size={28} name="figure.strengthtraining.traditional" color={color} />,
+            }}
+          />
         <Tabs.Screen
           name="plans"
           options={{
@@ -96,13 +103,6 @@ export default function TabLayout() {
           options={{
             title: 'Settings',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="about"
-          options={{
-            title: 'About',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="info.circle.fill" color={color} />,
           }}
         />
       </Tabs>
