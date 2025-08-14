@@ -1,84 +1,81 @@
-import { createPlanStyles } from '@/components/plans/styles';
-import { useWorkout } from '@/components/plans/WorkoutContext';
-import React, { useState } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
-import { Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-
-import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
+import AddPlanModal from '@/components/plans/AddPlanModal';
+import AllPlansCard from '@/components/plans/AllPlansCard';
 import CurrentPlanOverview from '@/components/plans/CurrentPlanOverview';
 import EmojiPicker from '@/components/plans/EmojiPicker';
-import WorkoutCard from '@/components/plans/WorkoutCard';
+import { createPlanStyles } from '@/components/plans/styles';
+import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { Card, IconButton, Text, useTheme } from 'react-native-paper';
 
 const PlansScreen = () => {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { currentPlan, workouts, updatePlan, updateWorkouts } = useWorkout();
+  const { currentPlan, workouts, updatePlan, updateWorkouts, addPlan, allPlans } = useWorkout();
   
- 
-  const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
-  
-
   const [selectedEmoji, setSelectedEmoji] = useState(currentPlan.emoji);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  // State for add workout modal
-  const [showAddWorkout, setShowAddWorkout] = useState(false);
-  const [newWorkout, setNewWorkout] = useState({
-    day: 'Monday',
-    date: new Date().toISOString().split('T')[0],
+  const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
+  const [showAddPlan, setShowAddPlan] = useState(false);
+  const [newPlan, setNewPlan] = useState({
     name: '',
-    startTime: '08:00',
-    endTime: '09:00',
-    difficulty: "AI Pending",
-    exercises_list: [] as any[]
+    goal: '',
+    duration: 1,
+    difficulty: 'AI Created',
+    emoji: '💪',
+    totalWorkouts: 12,
+    workouts: [] as Workout[],
   });
+  
+  useEffect(
+    () => {
+      console.log(currentPlan.workoutsCompleted)
+      // console.log('Reloading');
+      const now = new Date();
+      const chosenWorkout = workouts
+        .filter(w => 
+          new Date(w.date) > now && 
+          new Date(w.date).getDate() === now.getDate() && 
+          w.completed === false 
+        )
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+      // console.log('Upcoming workout:', chosenWorkout);
+      setUpcomingWorkout(chosenWorkout)
+    }
+  , [workouts])
 
-  // Toggle workout expansion
-  const toggleWorkoutExpansion = (workoutId: string) => {
-    setExpandedWorkouts(prev => ({
-      ...prev,
-      [workoutId]: !prev[workoutId]
-    }));
-  };
-
-  // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
     setSelectedEmoji(emoji);
     updatePlan({ ...currentPlan, emoji });
     setShowEmojiPicker(false);
   };
 
-  const resetForm = () => {
-    setNewWorkout({
-      day: 'Monday',
-      date: new Date().toISOString().split('T')[0],
-      name: '',
-      startTime: '08:00',
-      endTime: '09:00',
-      difficulty: 'Medium',
-      exercises_list: []
-    });
-  };
-
-  // add workout submission
-  const handleSubmitWorkout = () => {
-    if (!newWorkout.name.trim()) return;
-
-    const workout = {
-      id: Date.now().toString(),
-      name: newWorkout.name,
-      day: newWorkout.day,
-      date: new Date(newWorkout.date),
-      exercises: newWorkout.exercises_list.length,
-      duration: "est time",
-      difficulty: newWorkout.difficulty,
-      completed: false,
-      exercises_list: newWorkout.exercises_list
+  const handleSubmitPlan = () => {
+    if (!newPlan.name.trim() || !newPlan.goal.trim()) return;
+    
+    // Create the new plan (you'll need to add this to WorkoutContext)
+    const plan = {
+      ...newPlan,
+      current: false,
+      progress: '0%',
+      workoutsCompleted: 0,
     };
-
-    updateWorkouts([...workouts, workout]);
-    setShowAddWorkout(false);
-    resetForm();
+    
+    // Add plan creation logic here
+    addPlan(plan)
+    console.log('Plans:', allPlans.map(plan => plan.name));
+        setShowAddPlan(false);
+    
+    // Reset form
+    setNewPlan({
+      name: '',
+      goal: '',
+      duration: 1,
+      difficulty: 'Beginner',
+      emoji: '💪',
+      totalWorkouts: 12,
+      workouts: [] as Workout[],
+    });
   };
 
 
@@ -92,50 +89,24 @@ const PlansScreen = () => {
             onEmojiPress={() => setShowEmojiPicker(true)}
           />
 
-          {/* -------------Workouts Section------------- */}
-          <Surface style={styles.workoutsContainer} elevation={2}>
-            <View style={styles.sectionHeader}>
-              <View>
-                <Text variant="titleLarge" style={styles.primaryText}>
-                  Workouts in Plan
-                </Text>
-                <Text variant="bodyMedium" style={styles.surfaceVariantText}>
-                  {workouts.length} workouts • Tap to expand
-                </Text>
-              </View>
-            </View>
+          {/* Plans List */}
+          <AllPlansCard />
 
-            {/* ---------Workout Cards------------- */}
-            {workouts.map((workout) => (
-              <WorkoutCard
-                key={workout.id}
-                workout={workout}
-                isExpanded={expandedWorkouts[workout.id] || false}
-                onToggleExpanded={() => toggleWorkoutExpansion(workout.id)}
+          <Card style={[styles.workoutCard, {marginBottom: -2,}]} mode="outlined">
+            <TouchableOpacity onPress={() => setShowAddPlan(true)} style={[styles.addWorkoutContent, {marginTop: -16}]}>
+              <IconButton
+                icon="plus-circle-outline"
+                size={32}
+                iconColor={theme.colors.primary}
               />
-            ))}
-
-            {/* ---------Add New Workout Card------------- */}
-            <Card 
-              style={styles.addWorkoutCard} 
-              mode="outlined"
-            >
-              <TouchableOpacity onPress={() => setShowAddWorkout(true)} style={styles.addWorkoutContent}>
-                <IconButton
-                  icon="plus-circle-outline"
-                  size={32}
-                  iconColor={theme.colors.primary}
-                />
-                <Text variant="titleMedium" style={[styles.primaryTextRegular, { marginTop: 8 }]}>
-                  Add New Workout
-                </Text>
-                <Text variant="bodySmall" style={[styles.surfaceVariantText, styles.centeredText, { marginTop: 4 }]}>
-                  Create a custom workout
-                </Text>
-              </TouchableOpacity>
-            </Card>
-          </Surface>
+              <Text variant="titleMedium" style={[styles.primaryTextRegular, { marginTop: -12}]}>
+                Add New Plan
+              </Text>
+            </TouchableOpacity>
+          </Card>
         </View>
+
+
       </ScrollView>
 
       {/* Emoji Picker Modal */}
@@ -145,14 +116,12 @@ const PlansScreen = () => {
         onSelectEmoji={handleEmojiSelect}
         onDismiss={() => setShowEmojiPicker(false)}
       />
-
-      {/* Add Workout Modal */}
-      <AddWorkoutModal
-        visible={showAddWorkout}
-        newWorkout={newWorkout}
-        onWorkoutChange={setNewWorkout}
-        onSubmit={handleSubmitWorkout}
-        onDismiss={() => setShowAddWorkout(false)}
+      <AddPlanModal
+        visible={showAddPlan}
+        newPlan={newPlan}
+        onPlanChange={setNewPlan}
+        onSubmit={handleSubmitPlan}
+        onDismiss={() => setShowAddPlan(false)}
       />
     </View>
   );
