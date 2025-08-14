@@ -155,12 +155,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       name: "Plan Name",
       current: true,
       duration: 6,
-      progress: "Week 3 of 6",
+      progress: "",
       workoutsCompleted: 0,
       totalWorkouts: workouts.length,
       difficulty: "Difficulty Load",
       emoji: "💪",
-      goal:"",
+      goal:" I want to finish creating a fitness app in 6 weeks",
       workouts:[]
     }
   ]);

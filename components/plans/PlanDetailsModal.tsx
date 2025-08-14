@@ -77,14 +77,14 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
       <View style={styles.modalOverlay}>
         <Surface style={styles.planDetailsModal}>
           <View style={styles.modalHeader}>
-            <Text variant="headlineMedium" style={styles.primaryText}>{plan.name} • {plan.duration}</Text>
+            <Text variant="headlineMedium" style={styles.primaryText}>{plan.name} • {plan.duration} Weeks</Text>
             <IconButton icon="close" onPress={onDismiss} />
           </View>
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <View style={{ padding: 16 }}>
               <Text variant="headlineSmall" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>Goal:</Text>
               <View style={styles.goaltextbox}> 
-                <Text variant="titleMedium" style={{ color: theme.colors.primary }}>I want to finish creating a fitness app in 6 weeks</Text>
+                <Text variant="titleMedium" style={{ color: theme.colors.primary }}>{plan.goal}</Text>
               </View>
               <View style={styles.sectionHeader}>
                 <Text variant="titleLarge" style={{ color: theme.colors.primary, paddingVertical: 16, fontWeight: 'bold' }}>
