@@ -2,8 +2,11 @@ import React, { createContext, ReactNode, useContext, useState } from 'react';
 
 export interface Exercise {
   name: string;
-  sets: string;
-  weight: string;
+  sets: string; //set.rep.weight set.rep.time
+  // reps: number;
+  weight: string; //optional
+  // time: number;
+  //description/notes: string, href 
 }
 
 export interface Workout {
@@ -18,14 +21,19 @@ export interface Workout {
   exercises_list: Exercise[];
 }
 
+
 export interface WorkoutPlan {
+  id: string;
   name: string;
-  duration: string;
+  current: boolean;
+  goal:string;
+  duration: number;
   progress: string;
   workoutsCompleted: number;
   totalWorkouts: number;
   difficulty: string;
   emoji: string;
+  workouts: Workout[];
 }
 
 export interface CalendarEvent {
@@ -39,6 +47,7 @@ export interface CalendarEvent {
 
 interface WorkoutContextType {
   currentPlan: WorkoutPlan;
+  allPlans: WorkoutPlan[];
   workouts: Workout[];
   events: CalendarEvent[];
   updatePlan: (plan: Partial<WorkoutPlan>) => void;
@@ -47,6 +56,7 @@ interface WorkoutContextType {
   getWorkoutEvents: () => CalendarEvent[];
   markWorkoutComplete: (workoutId: string) => void;
   markWorkoutIncomplete: (workoutId: string) => void;
+  addPlan: (plan: Omit<WorkoutPlan, 'id'>) => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -139,15 +149,26 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     }
   ]);
 
-  const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
-    name: "Plan Name",
-    duration: "6 weeks",
-    progress: "Week 3 of 6",
-    workoutsCompleted: 0,
-    totalWorkouts: workouts.length,
-    difficulty: "Difficulty Load",
-    emoji: "💪"
-  });
+  const [allPlans, setAllPlans] = useState<WorkoutPlan[]>([
+    {
+      id: "1",
+      name: "Plan Name",
+      current: true,
+      duration: 6,
+      progress: "",
+      workoutsCompleted: 0,
+      totalWorkouts: workouts.length,
+      difficulty: "Difficulty Load",
+      emoji: "💪",
+      goal:" I want to finish creating a fitness app in 6 weeks",
+      workouts:[]
+    }
+  ]);
+
+
+  const currentPlan = allPlans.find(plan => plan.current) || allPlans[0];
+
+
   const [events, setEvents] = useState<CalendarEvent[]>([
     {
       title: 'Meeting',
@@ -158,6 +179,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   ]);
 
   // Convert workout duration string to minutes
+  // is this even being used? Probably switch to AI implementation later
   const parseDuration = (duration: string): number => {
     const match = duration.match(/(\d+)/);
     return match ? parseInt(match[1]) : 60; // default to 60 minutes
@@ -186,7 +208,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   const updatePlan = (planUpdate: Partial<WorkoutPlan>) => {
-    setCurrentPlan(prev => ({ ...prev, ...planUpdate }));
+    setAllPlans(prev => 
+      prev.map(plan => 
+        plan.current ? { ...plan, ...planUpdate } : plan
+      )
+    );
   };
 
   const updateWorkouts = (newWorkouts: Workout[]) => {
@@ -207,25 +233,43 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     );
     // Update plan completion count
     const completedCount = workouts.filter(w => w.completed || w.id === workoutId).length;
-    setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
+    setAllPlans(prev => 
+      prev.map(plan => 
+        plan.current ? { ...plan, workoutsCompleted: completedCount } : plan
+      )
+    );
   };
 
   const markWorkoutIncomplete = (workoutId: string) => {
-  setWorkouts(prev => {
-    const updatedWorkouts = prev.map(workout =>
-      workout.id === workoutId ? { ...workout, completed: false } : workout
-    );
-    
-    const completedCount = updatedWorkouts.filter(w => w.completed).length;
+    setWorkouts(prev => {
+      const updatedWorkouts = prev.map(workout =>
+        workout.id === workoutId ? { ...workout, completed: false } : workout
+      );
+      
+      const completedCount = updatedWorkouts.filter(w => w.completed).length;
 
-    setCurrentPlan(prev => ({ ...prev, workoutsCompleted: completedCount }));
+      setAllPlans(prevPlans => 
+        prevPlans.map(plan => 
+          plan.current ? { ...plan, workoutsCompleted: completedCount } : plan
+        )
+      );
 
-    return updatedWorkouts;
-  });
-};
+      return updatedWorkouts;
+    });
+  };
 
-  const value: WorkoutContextType = {
+  const addPlan = (plan: Omit<WorkoutPlan, 'id'>) => {
+    const newPlan: WorkoutPlan = {
+      ...plan,
+      id: (allPlans.length + 1).toString()
+    };
+    setAllPlans(prev => [...prev, newPlan]);
+  };
+
+
+const value: WorkoutContextType = {
     currentPlan,
+    allPlans,
     workouts,
     events,
     updatePlan,
@@ -234,6 +278,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     getWorkoutEvents,
     markWorkoutComplete,
     markWorkoutIncomplete,
+    addPlan,
   };
 
   return (
