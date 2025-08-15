@@ -4,6 +4,7 @@ import { Modal, ScrollView, View } from 'react-native';
 import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
 import AddExerciseModal from './AddExerciseModal';
+import ItemCard from '../ItemCard';
 
 interface NewWorkout {
   day: string;
@@ -231,10 +232,28 @@ export default function AddWorkoutModal({
                   }}
                 />
                  {newWorkout.exercises_list.map((ex, idx) => (
-                  <Text key={idx}>
-                    {ex.name} - {ex.sets} sets - {ex.weight} lbs
-                  </Text>
+                  <ItemCard
+                    key={idx}
+                    id={idx}
+                    title={ex.name}
+                    // Join all sets into a readable format: "10 reps x 50 lbs x 30 sec, 12 reps x 55 lbs x 30 sec"
+                    subtitle={ex.sets
+                      .map((s: [number, string, number]) => {
+                        const [reps, weight, time] = s;
+                        const repsStr = reps > 0 ? `${reps} reps` : '';
+                        const weightStr = weight ? `${weight}` : '';
+                        const timeStr = time > 0 ? `${time} sec` : '';
+                        return [repsStr, weightStr, timeStr].filter(Boolean).join(' x ');
+                      })
+                      .join(', ')}
+                    details={ex.description || undefined}
+                    onDelete={() => {
+                      const updated = newWorkout.exercises_list.filter((_, i) => i !== idx);
+                      onWorkoutChange({ ...newWorkout, exercises_list: updated });
+                    }}
+                  />
                 ))}
+
               </View>
 
               <View style={styles.submitContainer}>
