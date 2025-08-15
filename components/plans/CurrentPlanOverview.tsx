@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
-import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import { router } from 'expo-router';
 
 
