@@ -4,6 +4,7 @@ import { Button, Card, Divider, IconButton, Surface, Text, TextInput, useTheme }
 import AddWorkoutModal from './AddWorkoutModal';
 import { createPlanStyles } from './styles';
 import { Workout } from './WorkoutContext';
+import ItemCard from '../ItemCard';
 
 interface NewPlan {
   name: string;
@@ -228,11 +229,20 @@ export default function AddPlanModal({
                 </View>
                 
                 {/* Workout List */}
-                {newPlan.workouts && newPlan.workouts.length > 0 ? (
+                {newPlan.workouts && newPlan.workouts.length > 0 && (
                   <View>
-                    {newPlan.workouts.map(renderWorkoutCard)}
+                    {newPlan.workouts.map((workout) => (
+                      <ItemCard
+                        key={workout.id}
+                        id={workout.id}
+                        title={workout.name}
+                        subtitle={`${workout.day} • ${workout.duration} • ${workout.difficulty}`}
+                        details={`${workout.exercises} exercises`}
+                        onDelete={() => handleRemoveWorkout(workout.id)}
+                      />
+                    ))}
                   </View>
-                ) : null}
+                )}
               </View>
 
               <View style={styles.submitContainer}>
