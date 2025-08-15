@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
+import AddExerciseModal from './AddExerciseModal';
 
 interface NewWorkout {
   day: string;
@@ -49,6 +50,8 @@ export default function AddWorkoutModal({
 
   const [endTime, setEndTime] = useState(new Date());
   const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
 
   // Add state for time validation
   const [timeError, setTimeError] = useState(false);
@@ -214,12 +217,24 @@ export default function AddWorkoutModal({
                 </Text>
                 <Button
                   mode="outlined"
-                  onPress={() => console.log('Add Exercises')}
+                  onPress={() => setExerciseModalVisible(true)}
                   style={styles.addButton}
                   icon="plus"
                 >
                   Add Exercises
                 </Button>
+                <AddExerciseModal
+                  visible={exerciseModalVisible}
+                  onDismiss={() => setExerciseModalVisible(false)}
+                  onSubmit={(exercise) => {
+                    updateWorkout({ exercises_list: [...newWorkout.exercises_list, exercise] });
+                  }}
+                />
+                 {newWorkout.exercises_list.map((ex, idx) => (
+                  <Text key={idx}>
+                    {ex.name} - {ex.sets} sets - {ex.weight} lbs
+                  </Text>
+                ))}
               </View>
 
               <View style={styles.submitContainer}>
