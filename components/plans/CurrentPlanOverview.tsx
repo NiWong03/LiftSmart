@@ -4,6 +4,7 @@ import { Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'reac
 import { createPlanStyles } from './styles';
 import React, { useState } from 'react';
 import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
+import { router } from 'expo-router';
 
 interface CurrentPlanOverviewProps {
   selectedEmoji: string;
@@ -59,7 +60,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         <Button 
           mode="contained" 
           style={[styles.primaryButton, { flex: 1 }]}
-          onPress={() => console.log('Continue plan')}
+          onPress={() => router.push('/workout')}
           icon="play"
         >
           Continue Plan
