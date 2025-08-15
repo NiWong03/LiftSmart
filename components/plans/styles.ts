@@ -71,6 +71,35 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
 
+  // ----------------Plan Details Modal Styles----------------
+  planDetailsModal: {
+    borderRadius: 25,
+    width: '100%',
+    height: '90%',
+    backgroundColor: theme.colors.surface,
+
+  },
+
+  goaltextbox:{
+    backgroundColor: theme.colors.surfaceVariant, 
+    padding: 16, 
+    borderRadius: 12, 
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.outline
+  },
+
+  planFocusContainer:{
+    padding: 20, 
+    backgroundColor: theme.colors.surfaceVariant,
+     borderRadius: 12, 
+     borderColor: theme.colors.outline,
+      borderWidth: 1
+  },
+
+// ----------------Add Plan Styles----------------
+
+
   // Workouts Section Styles
   workoutsContainer: {
     borderRadius: 16,
