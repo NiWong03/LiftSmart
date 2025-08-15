@@ -219,7 +219,14 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   // Add Workout Modal Styles
   addWorkoutModal: {
     borderRadius: 16,
-    maxHeight: '85%',
+    maxHeight: '100%',
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: theme.colors.surface,
+  },
+  addExerciseModal: {
+    borderRadius: 16,
+    maxHeight: '100%',
     width: '100%',
     maxWidth: 500,
     backgroundColor: theme.colors.surface,

@@ -1,12 +1,12 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 
+export type Set = [reps: number, weight: string, time: number];
+
+
 export interface Exercise {
   name: string;
-  sets: string; //set.rep.weight set.rep.time
-  // reps: number;
-  weight: string; //optional
-  // time: number;
-  //description/notes: string, href 
+  sets: Set[]; //set.rep.weight set.rep.time
+  description?: string;
 }
 
 export interface Workout {
@@ -85,12 +85,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       completed: false,
       difficulty: 'Hard',
       exercises_list: [
-        { name: 'Bench Press', sets: '4 x 8-10', weight: '135 lbs' },
-        { name: 'Incline Dumbbell Press', sets: '3 x 10-12', weight: '65 lbs' },
-        { name: 'Chest Flyes', sets: '3 x 12-15', weight: '30 lbs' },
-        { name: 'Tricep Dips', sets: '3 x 10-15', weight: 'Bodyweight' },
-        { name: 'Overhead Tricep Extension', sets: '3 x 12-15', weight: '40 lbs' },
-        { name: 'Diamond Push-ups', sets: '2 x Max', weight: 'Bodyweight' }
+        { name: 'Bench Press', sets: [[10, '135 lbs', 20]], description: 'Flat barbell press for chest strength' },
+        { name: 'Incline Dumbbell Press', sets: [[12, '65 lbs', 20]], description: 'Targets upper chest' },
+        { name: 'Chest Flyes', sets: [[15, '30 lbs', 20]], description: 'Isolation chest exercise' },
+        { name: 'Tricep Dips', sets: [[12, 'Bodyweight', 20]], description: 'Bodyweight dips for triceps' },
+        { name: 'Overhead Tricep Extension', sets: [[15, '40 lbs', 20]], description: 'Dumbbell or EZ bar overhead extension' },
+        { name: 'Diamond Push-ups', sets: [[20, 'Bodyweight', 20]], description: 'Close grip push-ups for triceps' }
       ]
     },
     {
@@ -103,13 +103,13 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       completed: false,
       difficulty: 'Medium',
       exercises_list: [
-        { name: 'Deadlifts', sets: '4 x 6-8', weight: '185 lbs' },
-        { name: 'Pull-ups', sets: '4 x 8-12', weight: 'Bodyweight' },
-        { name: 'Barbell Rows', sets: '3 x 10-12', weight: '115 lbs' },
-        { name: 'Lat Pulldowns', sets: '3 x 12-15', weight: '110 lbs' },
-        { name: 'Bicep Curls', sets: '3 x 12-15', weight: '30 lbs' },
-        { name: 'Hammer Curls', sets: '3 x 12-15', weight: '25 lbs' },
-        { name: 'Face Pulls', sets: '2 x 15-20', weight: '50 lbs' }
+        { name: 'Deadlifts', sets: [[8, '185 lbs', 20]], description: 'Full body posterior chain exercise' },
+        { name: 'Pull-ups', sets: [[10, 'Bodyweight', 20]], description: 'Vertical pulling for lats' },
+        { name: 'Barbell Rows', sets: [[12, '115 lbs', 20]], description: 'Horizontal pull for mid-back' },
+        { name: 'Lat Pulldowns', sets: [[15, '110 lbs', 20]], description: 'Cable lat pulldown' },
+        { name: 'Bicep Curls', sets: [[15, '30 lbs', 20]], description: 'Isolation for biceps' },
+        { name: 'Hammer Curls', sets: [[15, '25 lbs', 20]], description: 'Targets brachialis and forearms' },
+        { name: 'Face Pulls', sets: [[20, '50 lbs', 20]], description: 'Rear delts and traps' }
       ]
     },
     {
@@ -122,12 +122,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       completed: false,
       difficulty: 'Hard',
       exercises_list: [
-        { name: 'Squats', sets: '4 x 8-10', weight: '155 lbs' },
-        { name: 'Romanian Deadlifts', sets: '4 x 10-12', weight: '135 lbs' },
-        { name: 'Bulgarian Split Squats', sets: '3 x 12 each leg', weight: '25 lbs' },
-        { name: 'Leg Press', sets: '3 x 15-20', weight: '270 lbs' },
-        { name: 'Walking Lunges', sets: '3 x 16 steps', weight: '20 lbs' },
-        { name: 'Calf Raises', sets: '4 x 15-20', weight: '45 lbs' }
+        { name: 'Squats', sets: [[10, '155 lbs', 20]], description: 'Barbell squats for quads & glutes' },
+        { name: 'Romanian Deadlifts', sets: [[12, '135 lbs', 20]], description: 'Hamstring & glute focused deadlift' },
+        { name: 'Bulgarian Split Squats', sets: [[12, '25 lbs', 20]], description: 'Single leg strength exercise' },
+        { name: 'Leg Press', sets: [[20, '270 lbs', 20]], description: 'Heavy quad/glute push' },
+        { name: 'Walking Lunges', sets: [[16, '20 lbs', 20]], description: 'Forward lunges with dumbbells' },
+        { name: 'Calf Raises', sets: [[20, '45 lbs', 20]], description: 'Standing calf raises' }
       ]
     },
     {
@@ -140,14 +140,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       completed: false,
       difficulty: 'Medium',
       exercises_list: [
-        { name: 'Push Press', sets: '4 x 6-8', weight: '95 lbs' },
-        { name: 'Explosive Push-ups', sets: '3 x 8-10', weight: 'Bodyweight' },
-        { name: 'Medicine Ball Slams', sets: '3 x 12-15', weight: '20 lbs' },
-        { name: 'Battle Ropes', sets: '3 x 30 sec', weight: 'N/A' },
-        { name: 'Plank to Push-up', sets: '3 x 10-12', weight: 'Bodyweight' }
+        { name: 'Push Press', sets: [[8, '95 lbs', 20]], description: 'Overhead press with leg drive' },
+        { name: 'Explosive Push-ups', sets: [[10, 'Bodyweight', 20]], description: 'Plyometric push-ups for power' },
+        { name: 'Medicine Ball Slams', sets: [[15, '20 lbs', 20]], description: 'Full body explosive movement' },
+        { name: 'Battle Ropes', sets: [[30, 'N/A', 20]], description: 'High-intensity conditioning ropes' },
+        { name: 'Plank to Push-up', sets: [[12, 'Bodyweight', 20]], description: 'Core stability with push-up transition' }
       ]
     }
   ]);
+
 
   const [allPlans, setAllPlans] = useState<WorkoutPlan[]>([
     {
