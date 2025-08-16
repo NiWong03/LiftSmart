@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 
 export type Set = [reps: number, weight: string, time: number, rest: number];
@@ -12,7 +13,7 @@ export interface Exercise {
 export interface Workout {
   id: string;
   day: string;
-  date: Date;
+  date: Date | Timestamp;
   name: string;
   duration: string;
   exercises: number;
@@ -189,7 +190,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   // Convert workouts to calendar events
   const getWorkoutEvents = (): CalendarEvent[] => {
     return workouts.map(workout => {
-      const workoutDate = new Date(workout.date);
+      const workoutDate = workout.date instanceof Timestamp 
+        ? workout.date.toDate() 
+        : new Date(workout.date);
       const startTime = new Date(workoutDate);
       startTime.setHours(8, 0, 0, 0); // Default start time 8:00 AM
       
