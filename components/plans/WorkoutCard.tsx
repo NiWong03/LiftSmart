@@ -79,9 +79,6 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
                   <Text variant="bodyMedium" style={styles.surfaceTextRegular}>
                     {exercise.name}
                   </Text>
-                  <Text variant="bodySmall" style={styles.surfaceVariantText}>
-                    {exercise.sets}{exercise.weight !== 'Bodyweight' && exercise.weight !== 'N/A' ? ` • ${exercise.weight}` : ''}
-                  </Text>
                 </View>
               </View>
             ))}
