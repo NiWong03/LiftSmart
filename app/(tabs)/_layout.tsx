@@ -1,8 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useTheme } from 'react-native-paper';
@@ -41,9 +40,11 @@ const styles = StyleSheet.create({
     right: 0,
   },
 });
+  
 
 export default function TabLayout() {
   const { colors } = useTheme();
+
   return (
       <Tabs
         screenOptions={{
