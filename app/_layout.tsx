@@ -5,8 +5,12 @@ import { StatusBar } from 'expo-status-bar';
 import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 
+import Login from '@/app/screens/login';
 import { WorkoutProvider } from '@/components/plans/WorkoutContext';
+import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
 
 const emeraldColors = {
   light: {
@@ -161,18 +165,42 @@ const getTheme = (colorScheme: 'light' | 'dark') => {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme() || 'light';
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  if (!loaded || loading) {
     return null;
   }
 
-  // Get the sophisticated emerald theme based on color scheme
   const paperTheme = getTheme(colorScheme);
 
+  // Show login if not authenticated
+  if (!user) {
+    return (
+      <WorkoutProvider>
+        <PaperProvider theme={paperTheme}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Login />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </PaperProvider>
+      </WorkoutProvider>
+    );
+  }
+
+  // Show main app if authenticated
   return (
     <WorkoutProvider>
       <PaperProvider theme={paperTheme}>
