@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 
-export type Set = [reps: number, weight: string, time: number];
+export type Set = [reps: number, weight: string, time: number, rest: number];
 
 
 export interface Exercise {
