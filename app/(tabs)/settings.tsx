@@ -1,27 +1,33 @@
-import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 
-const app = () => {
+const Settings = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      setUser(user);
+    });
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Text style= {styles.text}>settings</Text>
+      <Text variant="headlineLarge">
+        Hello {user?.email}
+      </Text>
     </View>
-  )
-}
-
-export default app
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-  },
-  text: {
-    color: 'black',
-    fontSize: 42,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
+
+export default Settings;
