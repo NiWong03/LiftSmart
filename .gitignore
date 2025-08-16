@@ -38,8 +38,6 @@ yarn-error.*
 
 app-example
 
-#files
-app/schedule copy.tsx
 
 # Firebase config with API keys
 firebaseAuth/FirebaseConfig.ts
