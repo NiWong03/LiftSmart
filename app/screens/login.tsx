@@ -1,7 +1,8 @@
 import { createPlanStyles } from '@/components/plans/styles';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import React, { useState } from 'react';
+import { router } from 'expo-router';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, View, } from 'react-native';
 import { ActivityIndicator, Avatar, Button, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 
@@ -12,8 +13,22 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const auth = FIREBASE_AUTH
+  const auth = FIREBASE_AUTH;
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthLoading(false);
+      if (user) {
+        // User is signed in, redirect to main app
+        router.replace('/(tabs)');
+      }
+    });
+
+    return unsubscribe; // Cleanup subscription
+  }, [auth]);
 
 
 
@@ -44,6 +59,16 @@ const Login = () => {
         setLoading(false);
     }
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.surfaceVariantText, { marginTop: 16 }]}>Checking authentication...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
