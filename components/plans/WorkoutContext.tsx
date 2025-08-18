@@ -3,6 +3,7 @@ import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, Timesta
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 
+
 export type Set = [reps: number, weight: string, time: number, rest: number];
 
 // ==================== INTERFACES ====================

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, ScrollView } from 'react-native';
-import { Button, IconButton, Surface, Text, TextInput, Divider, useTheme } from 'react-native-paper';
+import { Modal, ScrollView, View } from 'react-native';
+import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
 import { Exercise, Set } from './WorkoutContext';
 
@@ -75,31 +75,53 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
               Add Sets One by One
             </Text>
             {manualSets.map((set, index) => (
-              <View key={index} style={{ flexDirection: 'row', marginBottom: 8, alignItems: 'center' }}>
-                <TextInput
-                  label="Reps"
-                  mode="outlined"
-                  value={set.reps}
-                  keyboardType="numeric"
-                  onChangeText={(text) => updateManualSet(index, 'reps', text)}
-                  style={[styles.textInput, { flex: 1, marginRight: 4 }]}
-                />
-                <TextInput
-                  label="Weight"
-                  mode="outlined"
-                  value={set.weight}
-                  onChangeText={(text) => updateManualSet(index, 'weight', text)}
-                  style={[styles.textInput, { flex: 1, marginHorizontal: 4 }]}
-                />
-                <TextInput
-                  label="Time"
-                  mode="outlined"
-                  value={set.time}
-                  keyboardType="numeric"
-                  onChangeText={(text) => updateManualSet(index, 'time', text)}
-                  style={[styles.textInput, { flex: 1, marginLeft: 4 }]}
-                />
-                <IconButton icon="delete" onPress={() => removeManualSet(index)} />
+              <View key={index} style={{ marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', marginBottom: 8, alignItems: 'center' }}>
+                  <TextInput
+                    label="Reps"
+                    mode="outlined"
+                    value={set.reps}
+                    keyboardType="numeric"
+                    onChangeText={(text) => updateManualSet(index, 'reps', text)}
+                    style={[styles.textInput, { flex: 1, marginRight: 4 }]}
+                  />
+                  <TextInput
+                    label="Weight "
+                    placeholder="(lbs)"
+                    mode="outlined"
+                    value={set.weight}
+                    onChangeText={(text) => updateManualSet(index, 'weight', text)}
+                    style={[styles.textInput, { flex: 1, marginHorizontal: 4 }]}
+                  />
+                  <TextInput
+                    label="Time"
+                    placeholder="(min)"
+                    mode="outlined"
+                    value={set.time}
+                    keyboardType="numeric"
+                    onChangeText={(text) => updateManualSet(index, 'time', text)}
+                    style={[styles.textInput, { flex: 1, marginHorizontal: 4 }]}
+                  />
+
+                </View>
+                
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    label="Rest"
+                    placeholder="(min)"
+                    mode="outlined"
+                    value={set.rest}
+                    keyboardType="numeric"
+                    onChangeText={(text) => updateManualSet(index, 'rest', text)}
+                    style={[styles.textInput, { flex: 1, marginRight: 8 }]}
+                  />
+                  <IconButton 
+                    icon="delete" 
+                    onPress={() => removeManualSet(index)} 
+                    mode='outlined'
+                    size={20}
+                  />
+                </View>
               </View>
             ))}
 
