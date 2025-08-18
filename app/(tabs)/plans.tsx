@@ -58,6 +58,9 @@ const PlansScreen = () => {
   const handleSubmitPlan = () => {
     if (!newPlan.name.trim() || !newPlan.goal.trim()) return;
     
+    console.log('Submitting plan with workouts:', newPlan.workouts?.length || 0);
+    console.log('Workouts data:', newPlan.workouts);
+    
     // Create the new plan (you'll need to add this to WorkoutContext)
     const plan = {
       ...newPlan,
@@ -66,8 +69,8 @@ const PlansScreen = () => {
       workoutsCompleted: 0,
     };
     
-    // Add plan creation logic here
-    addPlan(plan)
+    
+    addPlan(plan, newPlan.workouts)
     console.log('Plans:', allPlans.map(plan => plan.name));
         setShowAddPlan(false);
     
