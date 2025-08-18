@@ -54,11 +54,6 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
           </Text>
           <Text variant="bodySmall" style={[styles.surfaceVariantText, { marginTop: 2 }]}>
             {formatDate(workout.date)}
-            <View style={styles.workoutMeta}>
-          <Text variant="bodySmall" style={styles.surfaceVariantText}>
-              {workout.exercises} exercises • {workout.duration}
-            </Text>
-            </View>
           </Text>
           <View style={styles.workoutMeta}>
             <Text variant="bodySmall" style={styles.surfaceVariantText}>

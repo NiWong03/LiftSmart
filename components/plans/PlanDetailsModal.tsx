@@ -1,5 +1,6 @@
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import WorkoutCard from '@/components/plans/WorkoutCard';
+import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
@@ -59,12 +60,15 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
       id: Date.now().toString(),
       name: newWorkout.name,
       day: newWorkout.day,
-      date: new Date(newWorkout.date),
+      date: Timestamp.fromDate(new Date(newWorkout.date)),
       exercises: newWorkout.exercises_list.length,
+      startTime: newWorkout.startTime,
+      endTime: newWorkout.endTime,
       duration: "est time",
       difficulty: newWorkout.difficulty,
       completed: false,
-      exercises_list: newWorkout.exercises_list
+      exercises_list: newWorkout.exercises_list,
+      userId: 'testUserID'
     };
 
     updateWorkouts([...workouts, workout]);

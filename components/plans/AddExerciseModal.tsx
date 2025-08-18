@@ -20,14 +20,14 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
   description: '',
 });
 
-  const [manualSets, setManualSets] = useState<{ reps?: string; weight?: string; time?: string }[]>([]);
+  const [manualSets, setManualSets] = useState<{ reps?: string; weight?: string; time?: string; rest?: string }[]>([]);
 
   const updateExercise = (updates: Partial<Exercise>) => {
     setExercise({ ...exercise, ...updates });
   };
 
   const addManualSet = () => {
-    setManualSets([...manualSets, { reps: '', weight: '', time: '' }]);
+    setManualSets([...manualSets, { reps: '', weight: '', time: '', rest: '' }]);
   };
 
   const updateManualSet = (index: number, field: string, value: string) => {
@@ -43,7 +43,7 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
   const isValid =
   exercise.name.trim() !== '' &&
   manualSets.some(
-    (s) => (s.reps && s.reps.trim() !== '') || (s.weight && s.weight.trim() !== '') || (s.time && s.time.trim() !== '')
+    (s) => (s.reps && s.reps.trim() !== '') || (s.weight && s.weight.trim() !== '') || (s.time && s.time.trim() !== '') || (s.rest && s.rest.trim() !== '')
   );
 
   return (
@@ -127,6 +127,7 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
                 parseInt(s.reps || '0', 10),
                 s.weight || '',
                 parseInt(s.time || '0', 10),
+                parseInt(s.rest || '0', 10)
               ]);
 
               onSubmit({ ...exercise, sets: [...exercise.sets, ...convertedSets] });

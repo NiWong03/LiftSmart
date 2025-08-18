@@ -1,10 +1,11 @@
+import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import ItemCard from '../ItemCard';
 import AddWorkoutModal from './AddWorkoutModal';
 import { createPlanStyles } from './styles';
 import { Workout } from './WorkoutContext';
-import ItemCard from '../ItemCard';
 
 interface NewPlan {
   name: string;
@@ -78,9 +79,12 @@ export default function AddPlanModal({
       id: Date.now().toString(),
       name: newWorkout.name,
       day: newWorkout.day,
-      date: new Date(newWorkout.date),
+      date: Timestamp.fromDate(new Date(newWorkout.date)),
       exercises: newWorkout.exercises_list.length,
       duration: "AI Calculated", // Default duration
+      startTime: newWorkout.startTime,
+      endTime: newWorkout.endTime,
+      userId: 'testUserID',
       difficulty: newWorkout.difficulty,
       completed: false,
       exercises_list: newWorkout.exercises_list

@@ -33,7 +33,7 @@ export default function PlanListCard() {
         ) : (
           <ScrollView style={{ maxHeight: 200 }}>
             {allPlans.map((plan, index) => (
-              <View key={plan.id}>
+              <View key={plan.planID}>
                 <View style={{ 
                   flexDirection: 'row', 
                   justifyContent: 'space-between', 
