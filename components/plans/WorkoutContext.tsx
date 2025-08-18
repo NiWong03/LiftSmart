@@ -177,7 +177,6 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
         date: doc.data().date.toDate() // Convert Firestore timestamp to Date
       })) as Workout[];
       
-      console.log('Setting workouts from Firestore:', firestoreWorkouts.length);
       setWorkouts(firestoreWorkouts);
     });
 
