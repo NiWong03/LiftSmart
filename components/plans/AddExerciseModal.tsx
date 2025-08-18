@@ -149,7 +149,7 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
                 parseInt(s.reps || '0', 10),
                 s.weight || '',
                 parseInt(s.time || '0', 10),
-                parseInt(s.rest || '0', 10),
+                parseInt(s.rest || '0', 10)
               ]);
 
               onSubmit({ ...exercise, sets: [...exercise.sets, ...convertedSets] });

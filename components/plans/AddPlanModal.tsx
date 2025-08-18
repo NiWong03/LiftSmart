@@ -1,10 +1,11 @@
+import { Timestamp } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import ItemCard from '../ItemCard';
 import AddWorkoutModal from './AddWorkoutModal';
 import { createPlanStyles } from './styles';
 import { Workout } from './WorkoutContext';
-import ItemCard from '../ItemCard';
 
 interface NewPlan {
   name: string;
@@ -74,23 +75,29 @@ export default function AddPlanModal({
   const handleAddWorkout = () => {
     if (!newWorkout.name.trim()) return;
 
-    const workout: Workout = {
-      id: Date.now().toString(),
+    // Create workout object with local ID for now
+    const workoutData: Workout = {
+      id: Date.now().toString(), // Local ID for UI
       name: newWorkout.name,
       day: newWorkout.day,
-      date: new Date(newWorkout.date),
+      date: Timestamp.fromDate(new Date(newWorkout.date)),
       exercises: newWorkout.exercises_list.length,
       duration: "AI Calculated", // Default duration
+      startTime: newWorkout.startTime,
+      endTime: newWorkout.endTime,
+      userId: 'testUserID', // Will be set by addPlan
       difficulty: newWorkout.difficulty,
       completed: false,
       exercises_list: newWorkout.exercises_list
     };
 
-    const updatedWorkouts = [...(newPlan.workouts || []), workout];
+    // Update local plan state only
+    const updatedWorkouts = [...(newPlan.workouts || []), workoutData];
     updatePlan({ 
       workouts: updatedWorkouts,
       totalWorkouts: updatedWorkouts.length 
     });
+    
     setShowAddWorkout(false);
     
     // Reset workout form

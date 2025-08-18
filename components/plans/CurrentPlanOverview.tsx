@@ -5,6 +5,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
 import { router } from 'expo-router';
+import { Timestamp } from 'firebase/firestore';
 
 
 interface CurrentPlanOverviewProps {
@@ -27,13 +28,17 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
       // console.log('Reloading');
       const now = new Date();
       const chosenWorkout = workouts
-        .filter(w => 
-          new Date(w.date) > now && 
-          new Date(w.date).getDate() === now.getDate() && 
-          w.completed === false 
-        )
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
-      // console.log('Upcoming workout:', chosenWorkout);
+        .filter(w => {
+          const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : w.date;
+          return workoutDate > now && 
+                 workoutDate.getDate() === now.getDate() && 
+                 w.completed === false;
+        })
+        .sort((a,b) => {
+          const dateA = a.date instanceof Timestamp ? a.date.toDate() : a.date;
+          const dateB = b.date instanceof Timestamp ? b.date.toDate() : b.date;
+          return dateA.getTime() - dateB.getTime();
+        })[0]
       setUpcomingWorkout(chosenWorkout)
     }
   , [workouts])

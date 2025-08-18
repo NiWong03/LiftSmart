@@ -1,4 +1,5 @@
 import { useWorkout, type Workout } from '@/components/plans/WorkoutContext';
+import { Timestamp } from 'firebase/firestore';
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Text, useTheme } from 'react-native-paper';
@@ -15,11 +16,19 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
   const { markWorkoutComplete } = useWorkout();
   const styles = createPlanStyles(theme);
 
+  const getWorkoutDate = (date: Date | Timestamp | string): Date => {
+    if (date instanceof Timestamp) {
+      return date.toDate();
+    }
+    if (typeof date === 'string') {
+      return new Date(date);
+    }
+    return date;
+  };
 
-//   instead of formatting here, change date to diff type?
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+  const formatDate = (date: Date | Timestamp | string) => {
+    const workoutDate = getWorkoutDate(date);
+    return workoutDate.toLocaleDateString('en-US', { 
       weekday: 'short', 
       month: 'short', 
       day: 'numeric' 
@@ -44,11 +53,7 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
             {workout.name}
           </Text>
           <Text variant="bodySmall" style={[styles.surfaceVariantText, { marginTop: 2 }]}>
-          {new Date(workout.date).toLocaleDateString('en-US', { 
-            weekday: 'short', 
-            month: 'short', 
-            day: 'numeric' 
-          })} 
+            {formatDate(workout.date)}
           </Text>
           <View style={styles.workoutMeta}>
             <Text variant="bodySmall" style={styles.surfaceVariantText}>
