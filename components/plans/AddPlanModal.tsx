@@ -75,8 +75,9 @@ export default function AddPlanModal({
   const handleAddWorkout = () => {
     if (!newWorkout.name.trim()) return;
 
-    const workout: Workout = {
-      id: Date.now().toString(),
+    // Create workout object with local ID for now
+    const workoutData: Workout = {
+      id: Date.now().toString(), // Local ID for UI
       name: newWorkout.name,
       day: newWorkout.day,
       date: Timestamp.fromDate(new Date(newWorkout.date)),
@@ -84,17 +85,19 @@ export default function AddPlanModal({
       duration: "AI Calculated", // Default duration
       startTime: newWorkout.startTime,
       endTime: newWorkout.endTime,
-      userId: 'testUserID',
+      userId: 'testUserID', // Will be set by addPlan
       difficulty: newWorkout.difficulty,
       completed: false,
       exercises_list: newWorkout.exercises_list
     };
 
-    const updatedWorkouts = [...(newPlan.workouts || []), workout];
+    // Update local plan state only
+    const updatedWorkouts = [...(newPlan.workouts || []), workoutData];
     updatePlan({ 
       workouts: updatedWorkouts,
       totalWorkouts: updatedWorkouts.length 
     });
+    
     setShowAddWorkout(false);
     
     // Reset workout form
