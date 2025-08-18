@@ -1,10 +1,10 @@
 import AddPlanModal from '@/components/plans/AddPlanModal';
 import AllPlansCard from '@/components/plans/AllPlansCard';
 import CurrentPlanOverview from '@/components/plans/CurrentPlanOverview';
-import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import EmojiPicker from '@/components/plans/EmojiPicker';
 import { createPlanStyles } from '@/components/plans/styles';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { Card, IconButton, Text, useTheme } from 'react-native-paper';
@@ -34,13 +34,17 @@ const PlansScreen = () => {
       // console.log('Reloading');
       const now = new Date();
       const chosenWorkout = workouts
-        .filter(w => 
-          new Date(w.date) > now && 
-          new Date(w.date).getDate() === now.getDate() && 
-          w.completed === false 
-        )
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
-      // console.log('Upcoming workout:', chosenWorkout);
+        .filter(w => {
+          const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : new Date(w.date);
+          return workoutDate > now && 
+                 workoutDate.getDate() === now.getDate() && 
+                 w.completed === false;
+        })
+        .sort((a,b) => {
+          const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+          const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        })[0]
       setUpcomingWorkout(chosenWorkout)
     }
   , [workouts])
@@ -54,6 +58,9 @@ const PlansScreen = () => {
   const handleSubmitPlan = () => {
     if (!newPlan.name.trim() || !newPlan.goal.trim()) return;
     
+    console.log('Submitting plan with workouts:', newPlan.workouts?.length || 0);
+    console.log('Workouts data:', newPlan.workouts);
+    
     // Create the new plan (you'll need to add this to WorkoutContext)
     const plan = {
       ...newPlan,
@@ -62,8 +69,8 @@ const PlansScreen = () => {
       workoutsCompleted: 0,
     };
     
-    // Add plan creation logic here
-    addPlan(plan)
+    
+    addPlan(plan, newPlan.workouts)
     console.log('Plans:', allPlans.map(plan => plan.name));
         setShowAddPlan(false);
     
