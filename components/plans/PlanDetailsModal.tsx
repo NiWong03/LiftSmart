@@ -97,7 +97,7 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
               </View>
               {workouts.map((workout) => (
                 <WorkoutCard
-                  key={workout.id}
+                  key={`${workout.id}-${workout.name}-${workout.exercises}`}
                   workout={workout}
                   isExpanded={expandedWorkouts[workout.id] || false}
                   onToggleExpanded={() => toggleWorkoutExpansion(workout.id)}
@@ -121,12 +121,12 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
             </Card>
 
             <AddWorkoutModal
-        visible={showAddWorkout}
-        newWorkout={newWorkout}
-        onWorkoutChange={setNewWorkout}
-        onSubmit={handleSubmitWorkout}
-        onDismiss={() => setShowAddWorkout(false)}
-      />
+            visible={showAddWorkout}
+            newWorkout={newWorkout}
+            onWorkoutChange={setNewWorkout}
+            onSubmit={handleSubmitWorkout}
+            onDismiss={() => setShowAddWorkout(false)}
+            />
             </View>
           </ScrollView>
         </Surface>
