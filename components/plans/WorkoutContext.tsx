@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/firebaseAuth/FirebaseConfig';
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 
@@ -97,6 +97,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   // ==================== AUTH & USER ====================
   const currentUser = FIREBASE_AUTH.currentUser;
   const userId = currentUser?.uid;
+  
+  // console.log('WorkoutProvider - currentUser:', currentUser);
+  // console.log('WorkoutProvider - userId:', userId);
 
    const [workouts, setWorkouts] = useState<Workout[]>([]);
 
@@ -119,6 +122,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
   // ==================== FIRESTORE DATA LOADING ====================
   useEffect(() => {
+    // console.log('useEffect running, userId:', userId);
     if (!userId) {
       console.log('No user logged in');
       return;
@@ -161,24 +165,73 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
     const workoutsQuery = query(
       collection(FIREBASE_DB, 'workouts'),
-      where('userId', '==', userId),
-      orderBy('date', 'asc')
+      where('userId', '==', userId)
     );
 
-    // stops listening to prevent memory leakes
-    const removeListener = onSnapshot(workoutsQuery, (snapshot) => {  
-      if (snapshot.empty) {
-        return; 
-      }
+    // console.log('Setting up Firestore listener for workouts, userId:', userId);
+    // console.log('Query:', workoutsQuery);
+    
+        // stops listening to prevent memory leakes
+    const removeListener = onSnapshot(workoutsQuery, 
+      (snapshot) => {
+        // console.log('Firestore listener triggered, snapshot size:', snapshot.size);
+        if (snapshot.empty) {
+          setWorkouts([]);
+          return; 
+        }
 
-      const firestoreWorkouts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date.toDate() // Convert Firestore timestamp to Date
-      })) as Workout[];
-      
-      setWorkouts(firestoreWorkouts);
-    });
+        const firestoreWorkouts = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            day: data.day || '',
+            name: data.name || '',
+            duration: data.duration || '',
+            startTime: data.startTime || '', 
+            endTime: data.endTime || '', 
+            exercises: data.exercises || 0,
+            completed: data.completed || false,
+            difficulty: data.difficulty || '',
+            userId: data.userId || '',
+            date: data.date?.toDate ? data.date.toDate() : new Date(data.date), // Convert Firestore timestamp to Date
+            // Ensure exercises_list is properly structured
+            exercises_list: data.exercises_list?.map((exercise: any) => ({
+              name: exercise.name || '',
+              sets: exercise.sets?.map((set: any) => {
+                // Handle both array and object formats
+                if (Array.isArray(set)) {
+                  return set; // Keep as array if it's already in array format
+                } else if (typeof set === 'object' && set !== null) {
+                  // Convert object format back to array format
+                  return [set.reps || 0, set.weight || '', set.time || 0, set.rest || 0];
+                }
+                return [0, '', 0, 0]; // Default fallback
+              }) || [],
+              description: exercise.description || ''
+            })) || []
+          } as Workout;
+        });
+        
+        // console.log('Loaded workouts from Firestore:', firestoreWorkouts);
+        //  console.log('Previous workouts state:', workouts);
+        //  console.log('Setting workouts state with:', firestoreWorkouts.length, 'workouts');
+         
+         // Debug time values
+         firestoreWorkouts.forEach(workout => {
+           console.log(`Workout ${workout.id} times:`, {
+             startTime: workout.startTime,
+             endTime: workout.endTime,
+             startTimeType: typeof workout.startTime,
+             endTimeType: typeof workout.endTime
+           });
+         });
+         setWorkouts(firestoreWorkouts);
+         setLoading(false);
+      },
+      (error) => {
+        console.error('Firestore listener error:', error);
+      }
+    );
 
     return () => {
       removeListener();
@@ -197,7 +250,76 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   const updateWorkout = async (workoutId: string, updates: Partial<Workout>): Promise<void> => {
-    await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), updates);
+    // Clean the updates to make them Firestore-serializable
+    const cleanUpdates: any = { ...updates };
+    
+    // Handle date conversion (only for the date field, not time strings)
+    if (updates.date) {
+      cleanUpdates.date = updates.date instanceof Timestamp ? updates.date : Timestamp.fromDate(new Date(updates.date));
+    }
+    
+    // Ensure time strings are preserved as strings (not converted to Date objects)
+    if (updates.startTime) {
+      cleanUpdates.startTime = updates.startTime.toString();
+    }
+    if (updates.endTime) {
+      cleanUpdates.endTime = updates.endTime.toString();
+    }
+    
+    // Handle exercises_list cleaning
+    if (updates.exercises_list) {
+      cleanUpdates.exercises_list = updates.exercises_list.map(exercise => ({
+        name: exercise.name || '',
+        sets: exercise.sets?.map(set => ({
+          reps: set[0] || 0,
+          weight: set[1] || '',
+          time: set[2] || 0,
+          rest: set[3] || 0
+        })) || [],
+        description: exercise.description || ''
+      }));
+    }
+    
+    // Update exercises count if exercises_list is being updated
+    if (updates.exercises_list) {
+      cleanUpdates.exercises = updates.exercises_list.length;
+    }
+    
+    // Update local state immediately for instant UI feedback
+    setWorkouts(prevWorkouts => 
+      prevWorkouts.map(workout => 
+        workout.id === workoutId 
+          ? { 
+              ...workout, 
+              ...updates,
+              // Ensure exercises count is updated in local state too
+              exercises: updates.exercises_list ? updates.exercises_list.length : workout.exercises
+            }
+          : workout
+      )
+    );
+    
+        console.log('Updating workout:', workoutId, 'with updates:', cleanUpdates);
+    try {
+      // Try to update the document first
+      const docRef = doc(FIREBASE_DB, 'workouts', workoutId);
+      await updateDoc(docRef, cleanUpdates);
+      console.log('Workout updated successfully in Firestore');
+    } catch (error: any) {
+      // If the document doesn't exist, create it
+      if (error.code === 'not-found') {
+        console.log('Document does not exist, creating new workout instead');
+        const docRef = doc(FIREBASE_DB, 'workouts', workoutId);
+        await setDoc(docRef, {
+          ...cleanUpdates,
+          userId
+        });
+        console.log('New workout created in Firestore with existing ID');
+      } else {
+        console.error('Error updating workout in Firestore:', error);
+        throw error;
+      }
+    }
   };
 
   const deleteWorkout = async (workoutId: string): Promise<void> => {
