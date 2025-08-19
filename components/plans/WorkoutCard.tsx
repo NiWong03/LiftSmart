@@ -1,9 +1,10 @@
 import { useWorkout, type Workout } from '@/components/plans/WorkoutContext';
 import { Timestamp } from 'firebase/firestore';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
+import EditWorkoutModal from '../plans/EditWorkoutModal';
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -13,8 +14,30 @@ interface WorkoutCardProps {
 
 export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: WorkoutCardProps) {
   const theme = useTheme();
-  const { markWorkoutComplete } = useWorkout();
+  const { markWorkoutComplete, updateWorkout, workouts } = useWorkout();
   const styles = createPlanStyles(theme);
+  const [showEditWorkoutModal, setShowEditWorkoutModal] = useState(false);
+  
+  // Get the latest workout data from context
+  const currentWorkout = workouts.find(w => w.id === workout.id) || workout;
+  
+  // Debug logging
+  // console.log('WorkoutCard render:', {
+  //   workoutId: workout.id,
+  //   originalName: workout.name,
+  //   currentName: currentWorkout.name,
+  //   workoutsLength: workouts.length,
+  //   foundWorkout: !!workouts.find(w => w.id === workout.id)
+  // });
+
+  // Force re-render when workout data changes
+  useEffect(() => {
+    console.log('WorkoutCard useEffect - workout data changed:', {
+      workoutId: workout.id,
+      currentName: currentWorkout.name,
+      exercisesCount: currentWorkout.exercises
+    });
+  }, [currentWorkout.name, currentWorkout.exercises, currentWorkout.exercises_list]);
 
   const getWorkoutDate = (date: Date | Timestamp | string): Date => {
     if (date instanceof Timestamp) {
@@ -40,9 +63,9 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
       <TouchableOpacity onPress={onToggleExpanded} style={styles.workoutHeader}>
         <View style={styles.workoutStatus}>
           <IconButton
-            icon={workout.completed ? "check-circle" : "clock-outline"}
+            icon={currentWorkout.completed ? "check-circle" : "clock-outline"}
             size={24}
-            iconColor={workout.completed ? theme.colors.primary : theme.colors.outline}
+            iconColor={currentWorkout.completed ? theme.colors.primary : theme.colors.outline}
           />
         </View>
 
@@ -50,14 +73,14 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
         
         <View style={styles.workoutInfo}>
           <Text variant="titleMedium" style={styles.surfaceText}>
-            {workout.name}
+            {currentWorkout.name}
           </Text>
           <Text variant="bodySmall" style={[styles.surfaceVariantText, { marginTop: 2 }]}>
-            {formatDate(workout.date)}
+            {formatDate(currentWorkout.date)}
           </Text>
           <View style={styles.workoutMeta}>
             <Text variant="bodySmall" style={styles.surfaceVariantText}>
-              {workout.exercises} exercises • {workout.duration}
+              {currentWorkout.exercises} exercises • {currentWorkout.duration}
             </Text>
           </View>
         </View>
@@ -78,7 +101,7 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
             <Text variant="labelMedium" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
               Exercises:
             </Text>
-            {workout.exercises_list.map((exercise, index) => (
+            {currentWorkout.exercises_list.map((exercise, index) => (
               <View key={index} style={styles.exerciseRow}>
                 <View style={styles.exerciseInfo}>
                   <Text variant="bodyMedium" style={styles.surfaceTextRegular}>
@@ -93,16 +116,19 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
           {/* ------Edit buttons------ */}
           <View style={styles.workoutActions}>
             <Button 
-              mode={workout.completed ? "outlined" : "contained"}
-              onPress={() => console.log(`Start ${workout.name}`)}
+              mode={currentWorkout.completed ? "outlined" : "contained"}
+              onPress={() => console.log(`Start ${currentWorkout.name}`)}
               style={{ flex: 1, marginRight: 4 }}
-              icon={workout.completed ? "repeat" : "play"}
+              icon={currentWorkout.completed ? "repeat" : "play"}
             >
-              {workout.completed ? "Repeat" : "Start"}
+              {currentWorkout.completed ? "Repeat" : "Start"}
             </Button>
             <Button 
               mode="outlined" 
-              onPress={() => console.log(`Edit ${workout.name}`)}
+              onPress={() => {
+                console.log(`Edit ${currentWorkout.name}`)
+                setShowEditWorkoutModal(true);
+              }}
               style={{ flex: 1, marginLeft: 4 }}
               icon="pencil"
             >
@@ -111,6 +137,16 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
           </View>
         </View>
       )}
+      
+      <EditWorkoutModal
+        visible={showEditWorkoutModal}
+        workout={currentWorkout}
+        onDismiss={() => setShowEditWorkoutModal(false)}
+        onSubmit={(updatedWorkout) => {
+          updateWorkout(currentWorkout.id, updatedWorkout);
+          setShowEditWorkoutModal(false);
+        }}
+      />
     </Card>
   );
 }
