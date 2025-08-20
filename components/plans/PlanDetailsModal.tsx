@@ -1,9 +1,10 @@
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import WorkoutCard from '@/components/plans/WorkoutCard';
+import EditPlanModal from '@/components/plans/EditPlanModal';
 import { Timestamp } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { Card, IconButton, Surface, Text, useTheme, TextInput, Button } from 'react-native-paper';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
 import { createPlanStyles } from './styles';
 
@@ -18,12 +19,25 @@ interface PlanDetailsModalProps {
 function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout } = useWorkout();
+  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans } = useWorkout();
+
+  // Get the updated plan data from context instead of using the prop
+  const updatedPlan = allPlans.find(p => p.planID === plan.planID) || plan;
 
   // Filter workouts to only show those belonging to this plan
-  const planWorkouts = workouts.filter(workout => workout.planId === plan.planID);
+  const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
 
   const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
+  const [showAddWorkout, setShowAddWorkout] = useState(false);
+  const [showEditPlan, setShowEditPlan] = useState(false);
+  
+  // Reset expanded workouts when modal opens
+  useEffect(() => {
+    if (visible) {
+      setExpandedWorkouts({});
+    }
+  }, [visible]);
+
   const toggleWorkoutExpansion = (workoutId: string) => {
     setExpandedWorkouts(prev => ({
       ...prev,
@@ -31,7 +45,6 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
     }));
   };
 
-  const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [newWorkout, setNewWorkout] = useState({
     day: 'Monday',
     date: new Date().toISOString().split('T')[0],
@@ -62,7 +75,7 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
     console.log('Adding workout to existing plan:', {
       name: newWorkout.name,
       exercises_count: newWorkout.exercises_list.length,
-      planId: plan.planID
+      planId: updatedPlan.planID
     });
 
     // Convert 24-hour format to 12-hour format
@@ -104,7 +117,7 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
     });
 
     try {
-      await addWorkout(workout, plan.planID); // Pass the plan ID
+      await addWorkout(workout, updatedPlan.planID); // Pass the plan ID
       console.log('Workout added to Firebase successfully');
       setShowAddWorkout(false);
       resetForm();
@@ -118,14 +131,17 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
       <View style={styles.modalOverlay}>
         <Surface style={styles.planDetailsModal}>
           <View style={styles.modalHeader}>
-            <Text variant="headlineMedium" style={styles.primaryText}>{plan.name} • {plan.duration} Weeks</Text>
-            <IconButton icon="close" onPress={onDismiss} />
+            <Text variant="headlineMedium" style={styles.primaryText}>{updatedPlan.name} • {updatedPlan.duration} Weeks</Text>
+            <View style={{ flexDirection: 'row' }}>
+              <IconButton icon="pencil" onPress={() => setShowEditPlan(true)} />
+              <IconButton icon="close" onPress={onDismiss} />
+            </View>
           </View>
           <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
             <View style={{ padding: 16 }}>
               <Text variant="headlineSmall" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>Goal:</Text>
               <View style={styles.goaltextbox}> 
-                <Text variant="titleMedium" style={{ color: theme.colors.primary }}>{plan.goal}</Text>
+                <Text variant="titleMedium" style={{ color: theme.colors.primary }}>{updatedPlan.goal}</Text>
               </View>
               <View style={styles.sectionHeader}>
                 <Text variant="titleLarge" style={{ color: theme.colors.primary, paddingVertical: 16, fontWeight: 'bold' }}>
@@ -163,6 +179,16 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
             onWorkoutChange={setNewWorkout}
             onSubmit={handleSubmitWorkout}
             onDismiss={() => setShowAddWorkout(false)}
+            />
+            
+            <EditPlanModal
+              visible={showEditPlan}
+              plan={updatedPlan} // Pass the current plan as the plan to edit
+              onDismiss={() => setShowEditPlan(false)}
+              onUpdate={(updatedPlan) => {
+                console.log('Plan updated:', updatedPlan);
+                setShowEditPlan(false);
+              }}
             />
             </View>
           </ScrollView>
