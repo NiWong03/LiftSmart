@@ -339,8 +339,38 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), { completed: false });
   };
 
-  const updatePlan = async (planUpdate: Partial<WorkoutPlan>): Promise<void> => {
-    setCurrentPlan(prev => ({ ...prev, ...planUpdate }));
+  const updatePlan = async (planUpdate: Partial<WorkoutPlan> & { planID?: string }): Promise<void> => {
+    if (!userId) throw new Error('No user logged in');
+    
+    const planId = planUpdate.planID;
+    if (!planId) throw new Error('Plan ID is required for update');
+    
+    try {
+      // Update in Firebase
+      const planRef = doc(FIREBASE_DB, 'plans', planId);
+      await updateDoc(planRef, planUpdate);
+      
+      // Update local state
+      setAllPlans(prevPlans => 
+        prevPlans.map(plan => 
+          plan.planID === planId 
+            ? { ...plan, ...planUpdate }
+            : plan
+        )
+      );
+      
+      // Update currentPlan if it's the one being updated
+      setCurrentPlan(prev => 
+        prev.planID === planId 
+          ? { ...prev, ...planUpdate }
+          : prev
+      );
+      
+      console.log('Plan updated successfully:', planUpdate);
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      throw error;
+    }
   };
 
   const addPlan = async (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]): Promise<void> => {
