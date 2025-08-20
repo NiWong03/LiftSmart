@@ -1,15 +1,17 @@
+import { ChatbotModal } from '@/components/chat/chatbot';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
 import { router } from 'expo-router';
+import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { Timestamp } from 'firebase/firestore';
 
 
 const HomeScreen = () => {
   const theme = useTheme();
   const { currentPlan, workouts } = useWorkout();
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
+  const [chatbotVisible, setChatbotVisible] = useState(false);
   
   useEffect(
     () => {
@@ -263,7 +265,7 @@ const HomeScreen = () => {
                   icon="robot"
                   size={24}
                   iconColor={theme.colors.primary}
-                  onPress={() => console.log('AI Chatbot')}
+                  onPress={() => setChatbotVisible(true)}
                 />
               </View>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
@@ -271,7 +273,7 @@ const HomeScreen = () => {
               </Text>
               <Button 
                 mode="outlined" 
-                onPress={() => console.log('Get AI Suggestions')}
+                onPress={() => setChatbotVisible(true)}
                 style={styles.aiButton}
                 icon="lightbulb"
               >
@@ -288,10 +290,15 @@ const HomeScreen = () => {
           size={32}
           iconColor={theme.colors.onPrimaryContainer}
           style={[styles.chatbotButton, { backgroundColor: theme.colors.tertiary }]}
-          onPress={() => console.log('Open AI Chatbot')}
+          onPress={() => setChatbotVisible(true)}
         />
       </View>
 
+      {/* Chatbot Modal */}
+      <ChatbotModal
+        visible={chatbotVisible}
+        onDismiss={() => setChatbotVisible(false)}
+      />
     </View>
   );
 };
