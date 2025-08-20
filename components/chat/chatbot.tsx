@@ -2,7 +2,7 @@ import { API_KEY } from "@/OpenAI.config";
 import OpenAI from "openai";
 import React, { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { IconButton, Modal, Portal, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
 
 const openai = new OpenAI({
     apiKey: API_KEY,
@@ -11,6 +11,8 @@ const openai = new OpenAI({
 interface ChatbotModalProps {
   visible: boolean;
   onDismiss: () => void;
+  onParsedResponse?: (data: any) => void;
+  onRequestOpenAddPlan?: () => void;
 }
 
 interface Message {
@@ -20,12 +22,13 @@ interface Message {
     timestamp: Date;
   }
 
-export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss }) => {
+export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, onParsedResponse, onRequestOpenAddPlan }) => {
   const theme = useTheme();
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [hasDraftPlan, setHasDraftPlan] = useState(false);
 
   // Add keyboard listeners
   useEffect(() => {
@@ -144,6 +147,10 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss }
                 const responseContent = response.choices[0].message.content;
                 if (!responseContent) return;
                 const parsedResponse = JSON.parse(responseContent); 
+                onParsedResponse?.(parsedResponse);
+                if (parsedResponse?.plan) {
+                  setHasDraftPlan(true);
+                }
                 console.log('response parsed!')           
                 const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
@@ -265,6 +272,23 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss }
                 </Surface>
               </View>
               ))}
+              {hasDraftPlan && (
+                <View style={[styles.messageContainer, styles.assistantMessage]}>
+                    <TouchableRipple
+                    onPress={() => onRequestOpenAddPlan?.()}
+                    borderless={false}
+                    style={{ borderRadius: 16 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Review and create plan"
+                    >
+                    <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.tertiary }]} elevation={1}>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                        Plan is ready. Click here to review!
+                        </Text> 
+                    </Surface>
+                    </TouchableRipple>
+                </View>
+                )}
             </ScrollView>
 
             {/* Input */}

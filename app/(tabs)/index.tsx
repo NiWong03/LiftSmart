@@ -1,17 +1,31 @@
 import { ChatbotModal } from '@/components/chat/chatbot';
+import AddPlanModal from '@/components/plans/AddPlanModal';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme, Portal, Modal as PaperModal } from 'react-native-paper';
 
 
 const HomeScreen = () => {
   const theme = useTheme();
-  const { currentPlan, workouts } = useWorkout();
+  const { currentPlan, workouts, addPlan } = useWorkout();
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const [chatbotVisible, setChatbotVisible] = useState(false);
+  const [showAddPlanModal, setShowAddPlanModal] = useState(false);
+  const authUserId = FIREBASE_AUTH.currentUser?.uid ?? '';
+
+  const [draftPlan, setDraftPlan] = useState({
+    name: '',
+    goal: '',
+    duration: 1,
+    difficulty: 'AI Generated',
+    emoji: '💪',
+    totalWorkouts: 0,
+    workouts: [] as Workout[],
+  });
   
   useEffect(
     () => {
@@ -31,6 +45,42 @@ const HomeScreen = () => {
       setUpcomingWorkout(chosenWorkout)
     }
   , [workouts])
+
+  const handleParsedResponse = (data: any) => {
+    try {
+      const plan = data?.plan;
+      if (!plan) return;
+
+      const mappedWorkouts: Workout[] = (plan.workouts || []).map((w: any, index: number) => ({
+        id: `ai-${Date.now()}-${index}`,
+        day: w.day || '',
+        date: new Date(typeof w.date === 'string' ? w.date : w.date?.toString?.() || ''),
+        name: w.name || '',
+        duration: w.duration,
+        startTime: w.startTime,
+        endTime: w.endTime,
+        exercises: Array.isArray(w.exercises_list) ? w.exercises_list.length : (w.exercises || 0),
+        completed: false,
+        difficulty: w.difficulty || plan.difficulty, // incase no workout difficulty, generalize with plan difficulty
+        exercises_list: w.exercises_list || [],
+        userId: authUserId, // will be set by addPlan
+      }));
+
+      setDraftPlan({
+        name: plan.name || '--Plan Name Needed--',
+        goal: plan.goal || 'Specify a Goal for the Plan',
+        duration: plan.duration || 1,
+        difficulty: plan.difficulty || '',
+        emoji: plan.emoji || '💪',
+        totalWorkouts: mappedWorkouts.length,
+        workouts: mappedWorkouts,
+      });
+
+     
+    } catch (error) {
+      console.error('Failed to map AI plan to draft:', error);
+    }
+  };
   
   return (
     <View style={styles.mainContainer}>
@@ -298,6 +348,40 @@ const HomeScreen = () => {
       <ChatbotModal
         visible={chatbotVisible}
         onDismiss={() => setChatbotVisible(false)}
+        onParsedResponse={handleParsedResponse}
+        onRequestOpenAddPlan={() => 
+          {
+            setChatbotVisible(false);
+            setShowAddPlanModal(true);
+          }
+        }
+      />
+
+      <AddPlanModal
+        visible={showAddPlanModal}
+        newPlan={draftPlan as any}
+        onPlanChange={(p: any) => setDraftPlan(p)}
+        onSubmit={async (p: any) => {
+          try {
+            await addPlan({
+              name: p.name,
+              duration: p.duration,
+              progress: '0%',
+              goal: p.goal,
+              workoutsCompleted: 0,
+              totalWorkouts: p.workouts?.length || 0,
+              difficulty: p.difficulty,
+              emoji: p.emoji,
+              current: false,
+              planID: '' as any,
+            } as any, p.workouts);
+          } catch (e) {
+            console.error('Failed to create plan from AI draft:', e);
+          } finally {
+            setShowAddPlanModal(false);
+          }
+        }}
+        onDismiss={() => setShowAddPlanModal(false)}
       />
     </View>
   );
