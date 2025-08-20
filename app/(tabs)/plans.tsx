@@ -84,7 +84,6 @@ const PlansScreen = () => {
     // Create the new plan (you'll need to add this to WorkoutContext)
     const plan = {
       ...planToSubmit,
-      current: false,
       progress: '0%',
       workoutsCompleted: 0,
     };
@@ -121,13 +120,24 @@ const PlansScreen = () => {
       <ScrollView style={styles.container}>
         <View style={styles.content}>
           {/* -----------Current Plan Overview--------- */}
-          <CurrentPlanOverview
-            selectedEmoji={selectedEmoji}
-            onEmojiPress={() => setShowEmojiPicker(true)}
-          />
+          {allPlans.length > 0 ? (
+            <CurrentPlanOverview
+              selectedEmoji={selectedEmoji}
+              onEmojiPress={() => setShowEmojiPicker(true)}
+            />
+          ) : (
+            <Card style={styles.workoutCard} mode="outlined">
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <Text variant="headlineSmall" style={styles.primaryText}>No Plans Yet</Text>
+                <Text variant="bodyMedium" style={styles.surfaceVariantText}>
+                  Create your first workout plan to get started!
+                </Text>
+              </View>
+            </Card>
+          )}
 
           {/* Plans List */}
-          <AllPlansCard />
+          {allPlans.length > 0 && <AllPlansCard />}
 
           <Card style={[styles.workoutCard, {marginBottom: -2,}]} mode="outlined">
             <TouchableOpacity onPress={() => setShowAddPlan(true)} style={[styles.addWorkoutContent, {marginTop: -16}]}>
@@ -147,12 +157,14 @@ const PlansScreen = () => {
       </ScrollView>
 
       {/* Emoji Picker Modal */}
-      <EmojiPicker
-        visible={showEmojiPicker}
-        selectedEmoji={selectedEmoji}
-        onSelectEmoji={handleEmojiSelect}
-        onDismiss={() => setShowEmojiPicker(false)}
-      />
+      {allPlans.length > 0 && (
+        <EmojiPicker
+          visible={showEmojiPicker}
+          selectedEmoji={selectedEmoji}
+          onSelectEmoji={handleEmojiSelect}
+          onDismiss={() => setShowEmojiPicker(false)}
+        />
+      )}
       <AddPlanModal
         visible={showAddPlan}
         newPlan={newPlan}

@@ -64,6 +64,7 @@ interface WorkoutContextType {
   // Plan operations
   updatePlan: (plan: Partial<WorkoutPlan>) => Promise<void>;
   addPlan: (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]) => Promise<void>;
+  deletePlan: (planId: string) => Promise<void>;
   
   // Workout operations (for components to use)
   addWorkout: (workout: Omit<Workout, 'id' | 'userId'>, planId?: string) => Promise<void>;
@@ -346,7 +347,28 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     if (!planId) throw new Error('Plan ID is required for update');
     
     try {
-      // Update in Firebase
+      // If this plan is being set as current, unset all other plans first
+      if (planUpdate.current === true) {
+        console.log('Setting plan as current, unsetting other plans...');
+        
+        // Update all other plans to not be current
+        const otherPlans = allPlans.filter(plan => plan.planID !== planId);
+        for (const otherPlan of otherPlans) {
+          const otherPlanRef = doc(FIREBASE_DB, 'plans', otherPlan.planID);
+          await updateDoc(otherPlanRef, { current: false });
+        }
+        
+        // Update local state for other plans
+        setAllPlans(prevPlans => 
+          prevPlans.map(plan => 
+            plan.planID !== planId 
+              ? { ...plan, current: false }
+              : plan
+          )
+        );
+      }
+      
+      // Update the target plan
       const planRef = doc(FIREBASE_DB, 'plans', planId);
       await updateDoc(planRef, planUpdate);
       
@@ -378,19 +400,24 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     
     console.log('addPlan called with:', { plan, workoutsCount: workouts?.length || 0 });
     console.log('Current userId:', userId);
+    console.log('Current allPlans count:', allPlans.length);
     
     try {
+      // Check if this is the first plan - if so, set it as current
+      const isFirstPlan = allPlans.length === 0;
+      
       // First, create the plan to get its ID
       const planData = {
         ...plan,
         userId,
         createdAt: Timestamp.now(),
+        current: isFirstPlan, // Set as current if it's the first plan
       };
       
       const planDocRef = await addDoc(collection(FIREBASE_DB, 'plans'), planData);
       const planId = planDocRef.id;
       
-      console.log('Plan created with ID:', planId);
+      console.log('Plan created with ID:', planId, 'isFirstPlan:', isFirstPlan);
       
       if (workouts && workouts.length > 0) {
         console.log('Processing workouts for plan creation...');
@@ -455,6 +482,27 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     }
   };
 
+  const deletePlan = async (planId: string): Promise<void> => {
+    if (!userId) throw new Error('No user logged in');
+    await deleteDoc(doc(FIREBASE_DB, 'plans', planId));
+    setAllPlans(prevPlans => prevPlans.filter(plan => plan.planID !== planId));
+    if (currentPlan.planID === planId) {
+      setCurrentPlan({
+        name: "Plan Name",
+        goal: "I want to finish developing app in 6 weeks",
+        duration: 6,
+        progress: "Week 3 of 6",
+        workoutsCompleted: 0,
+        totalWorkouts: 0,
+        difficulty: "Difficulty Load",
+        emoji: "💪",
+        planID: "1",
+        current: true
+      });
+    }
+    console.log('Plan deleted successfully:', planId);
+  };
+
   // ==================== LOCAL OPERATIONS ====================
   const updateWorkouts = (newWorkouts: Workout[]) => {
     setWorkouts(newWorkouts);
@@ -509,6 +557,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     // Firestore operations
     updatePlan,
     addPlan,
+    deletePlan,
     addWorkout,
     updateWorkout,
     deleteWorkout,
