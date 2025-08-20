@@ -18,7 +18,10 @@ interface PlanDetailsModalProps {
 function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { currentPlan, workouts, updatePlan, updateWorkouts } = useWorkout();
+  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout } = useWorkout();
+
+  // Filter workouts to only show those belonging to this plan
+  const planWorkouts = workouts.filter(workout => workout.planId === plan.planID);
 
   const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
   const toggleWorkoutExpansion = (workoutId: string) => {
@@ -53,27 +56,61 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   };
 
   // add workout submission
-  const handleSubmitWorkout = () => {
+  const handleSubmitWorkout = async () => {
     if (!newWorkout.name.trim()) return;
 
+    console.log('Adding workout to existing plan:', {
+      name: newWorkout.name,
+      exercises_count: newWorkout.exercises_list.length,
+      planId: plan.planID
+    });
+
+    // Convert 24-hour format to 12-hour format
+    const convertTo12Hour = (time24: string) => {
+      const [hours, minutes] = time24.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
+
     const workout = {
-      id: Date.now().toString(),
       name: newWorkout.name,
       day: newWorkout.day,
-      date: Timestamp.fromDate(new Date(newWorkout.date)),
+      date: new Date(newWorkout.date),
       exercises: newWorkout.exercises_list.length,
-      startTime: newWorkout.startTime,
-      endTime: newWorkout.endTime,
+      startTime: convertTo12Hour(newWorkout.startTime),
+      endTime: convertTo12Hour(newWorkout.endTime),
       duration: "est time",
       difficulty: newWorkout.difficulty,
       completed: false,
-      exercises_list: newWorkout.exercises_list,
-      userId: 'testUserID'
+      exercises_list: newWorkout.exercises_list?.map(exercise => ({
+        name: exercise.name || '',
+        sets: exercise.sets?.map((set: any) => ({
+          reps: set[0] || 0,
+          weight: set[1] || '',
+          time: set[2] || 0,
+          rest: set[3] || 0
+        })) || [],
+        description: exercise.description || ''
+      })) || []
     };
 
-    updateWorkouts([...workouts, workout]);
-    setShowAddWorkout(false);
-    resetForm();
+    console.log('Created workout object:', {
+      name: workout.name,
+      exercises: workout.exercises,
+      startTime: workout.startTime,
+      endTime: workout.endTime,
+      exercises_list_length: workout.exercises_list?.length || 0
+    });
+
+    try {
+      await addWorkout(workout, plan.planID); // Pass the plan ID
+      console.log('Workout added to Firebase successfully');
+      setShowAddWorkout(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error adding workout:', error);
+    }
   };
 
   return (
@@ -95,7 +132,7 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
                   Workouts in Plan
                 </Text>
               </View>
-              {workouts.map((workout) => (
+              {planWorkouts.map((workout) => (
                 <WorkoutCard
                   key={`${workout.id}-${workout.name}-${workout.exercises}`}
                   workout={workout}

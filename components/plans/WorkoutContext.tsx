@@ -28,6 +28,7 @@ export interface Workout {
   difficulty: string;
   exercises_list: Exercise[];
   userId: string;
+  planId?: string; // Optional field to link workout to a specific plan
 }
 
 export interface WorkoutPlan {
@@ -65,7 +66,7 @@ interface WorkoutContextType {
   addPlan: (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]) => Promise<void>;
   
   // Workout operations (for components to use)
-  addWorkout: (workout: Omit<Workout, 'id' | 'userId'>) => Promise<void>;
+  addWorkout: (workout: Omit<Workout, 'id' | 'userId'>, planId?: string) => Promise<void>;
   updateWorkout: (workoutId: string, updates: Partial<Workout>) => Promise<void>;
   deleteWorkout: (workoutId: string) => Promise<void>;
   markWorkoutComplete: (workoutId: string) => Promise<void>;
@@ -193,6 +194,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
             completed: data.completed || false,
             difficulty: data.difficulty || '',
             userId: data.userId || '',
+            planId: data.planId || '', // Include planId field
             date: data.date?.toDate ? data.date.toDate() : new Date(data.date), // Convert Firestore timestamp to Date
             // Ensure exercises_list is properly structured
             exercises_list: data.exercises_list?.map((exercise: any) => ({
@@ -240,13 +242,16 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   }, [userId]);
 
   // ==================== FIRESTORE OPERATIONS ====================
-  const addWorkout = async (workout: Omit<Workout, 'id' | 'userId'>): Promise<void> => {
+  const addWorkout = async (workout: Omit<Workout, 'id' | 'userId'>, planId?: string): Promise<void> => {
     if (!userId) throw new Error('No user logged in');
     
-    await addDoc(collection(FIREBASE_DB, 'workouts'), {
+    const workoutData = {
       ...workout,
-      userId
-    });
+      userId,
+      planId, // Link workout to plan if provided
+    };
+    
+    await addDoc(collection(FIREBASE_DB, 'workouts'), workoutData);
   };
 
   const updateWorkout = async (workoutId: string, updates: Partial<Workout>): Promise<void> => {
@@ -341,63 +346,79 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   const addPlan = async (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]): Promise<void> => {
     if (!userId) throw new Error('No user logged in');
     
+    console.log('addPlan called with:', { plan, workoutsCount: workouts?.length || 0 });
+    console.log('Current userId:', userId);
+    
     try {
-      if (workouts && workouts.length > 0) {
-        // Clean workout data to make it Firestore-serializable
-        const cleanWorkouts = workouts.map(workout => ({
-          ...workout,
-          userId,
-          // Ensure date is a Timestamp
-          date: workout.date instanceof Timestamp ? workout.date : Timestamp.fromDate(new Date(workout.date)),
-          // Fix nested array error for workouts
-          exercises_list: workout.exercises_list?.map(exercise => ({
-            name: exercise.name || '',
-            sets: exercise.sets?.map(set => ({
-              reps: set[0] || 0,
-              weight: set[1] || '',
-              time: set[2] || 0,
-              rest: set[3] || 0
-            })) || [],
-            description: exercise.description || ''
-          }))
-        }));
-        
-        const workoutPromises = cleanWorkouts.map(async (workout) => {
-          return await addDoc(collection(FIREBASE_DB, 'workouts'), workout);
-        });
-        
-        await Promise.all(workoutPromises);
-        console.log('Workouts added:', workouts.length);
-      }
-      
-      // Then add the plan to Firestore (with cleaned workout data)
-      const cleanPlanData = {
+      // First, create the plan to get its ID
+      const planData = {
         ...plan,
         userId,
         createdAt: Timestamp.now(),
-        // Include cleaned workouts in the plan document
-        workouts: workouts?.map(workout => ({
-          ...workout,
-          userId,
-          // Ensure date is a Timestamp
-          date: workout.date instanceof Timestamp ? workout.date : Timestamp.fromDate(new Date(workout.date)),
-          // have to add this to fix nested array in plans too 
-          exercises_list: workout.exercises_list?.map(exercise => ({
-            name: exercise.name || '',
-            sets: exercise.sets?.map(set => ({
-              reps: set[0] || 0,
-              weight: set[1] || '',
-              time: set[2] || 0,
-              rest: set[3] || 0
-            })) || [],
-            description: exercise.description || ''
-          }))
-        })) || []
       };
       
-      const docRef = await addDoc(collection(FIREBASE_DB, 'plans'), cleanPlanData);
+      const planDocRef = await addDoc(collection(FIREBASE_DB, 'plans'), planData);
+      const planId = planDocRef.id;
       
-      console.log('Plan created with ID:', docRef.id);
+      console.log('Plan created with ID:', planId);
+      
+      if (workouts && workouts.length > 0) {
+        console.log('Processing workouts for plan creation...');
+        
+        // Clean workout data to make it Firestore-serializable
+        const cleanWorkouts = workouts.map((workout, index) => {
+          console.log(`Processing workout ${index + 1}:`, {
+            name: workout.name,
+            exercisesCount: workout.exercises_list?.length || 0,
+            exercises_list: workout.exercises_list
+          });
+          
+          const cleanedWorkout = {
+            ...workout,
+            userId,
+            planId, // Link workout to this plan
+            // Ensure date is a Timestamp
+            date: workout.date instanceof Timestamp ? workout.date : Timestamp.fromDate(new Date(workout.date)),
+            // Fix nested array error for workouts
+            exercises_list: workout.exercises_list?.map(exercise => ({
+              name: exercise.name || '',
+              sets: exercise.sets?.map(set => ({
+                reps: set[0] || 0,
+                weight: set[1] || '',
+                time: set[2] || 0,
+                rest: set[3] || 0
+              })) || [],
+              description: exercise.description || ''
+            })) || []
+          };
+          
+          console.log(`Cleaned workout ${index + 1}:`, {
+            name: cleanedWorkout.name,
+            exercisesCount: cleanedWorkout.exercises_list?.length || 0,
+            userId: cleanedWorkout.userId,
+            planId: cleanedWorkout.planId
+          });
+          
+          return cleanedWorkout;
+        });
+        
+        console.log('Adding workouts to Firestore...');
+        const workoutPromises = cleanWorkouts.map(async (workout, index) => {
+          try {
+            const docRef = await addDoc(collection(FIREBASE_DB, 'workouts'), workout);
+            console.log(`Workout ${index + 1} added with ID:`, docRef.id);
+            return docRef;
+          } catch (error) {
+            console.error(`Error adding workout ${index + 1}:`, error);
+            throw error;
+          }
+        });
+        
+        await Promise.all(workoutPromises);
+        console.log('All workouts added successfully:', workouts.length);
+      } else {
+        console.log('No workouts to add to Firestore');
+      }
     } catch (error) {
       console.error('Error in addPlan:', error);
       throw error;
