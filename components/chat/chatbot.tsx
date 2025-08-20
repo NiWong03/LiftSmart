@@ -72,11 +72,14 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
 Rules:
 - Valid JSON only.
 - No extra fields (omit id, userId).
-- Dates: "YYYY-MM-DD".
+- Dates: "YYYY-MM-DD". //set dates relative to today's date
 - Time: "h:mm AM/PM".
 - workoutsCompleted = 0; totalWorkouts = workouts.length.
 - Sets: arrays in format [reps:number, weight:string, time:number, rest:number].
 - Difficulty: "Easy" | "Medium" | "Hard".
+- Do not wrap response in backticks or markdown code blocks.
+
+Current date: ${new Date().toISOString().split('T')[0]}
 
 Schemas:
 type Set = [reps:number, weight:string, time:number, rest:number];
@@ -108,8 +111,7 @@ interface WorkoutPlan {
   difficulty: "Easy" | "Medium" | "Hard";
   emoji: string;
   workouts: Workout[];
-}
-`
+}`
                   },
               { role: "user", content: inputText.trim() }
             ],
