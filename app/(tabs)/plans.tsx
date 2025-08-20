@@ -27,6 +27,22 @@ const PlansScreen = () => {
     totalWorkouts: 12,
     workouts: [] as Workout[],
   });
+
+  // Reset newPlan state when modal opens/closes
+  useEffect(() => {
+    if (showAddPlan) {
+      console.log('Modal opening - resetting newPlan state');
+      setNewPlan({
+        name: '',
+        goal: '',
+        duration: 1,
+        difficulty: 'AI Created',
+        emoji: '💪',
+        totalWorkouts: 12,
+        workouts: [] as Workout[],
+      });
+    }
+  }, [showAddPlan]);
   
   useEffect(
     () => {
@@ -55,35 +71,47 @@ const PlansScreen = () => {
     setShowEmojiPicker(false);
   };
 
-  const handleSubmitPlan = () => {
-    if (!newPlan.name.trim() || !newPlan.goal.trim()) return;
+  const handleSubmitPlan = async (planData?: any) => {
+    const planToSubmit = planData || newPlan;
     
-    console.log('Submitting plan with workouts:', newPlan.workouts?.length || 0);
-    console.log('Workouts data:', newPlan.workouts);
+    if (!planToSubmit.name.trim() || !planToSubmit.goal.trim()) return;
+    
+    console.log('=== PLAN SUBMISSION DEBUG ===');
+    console.log('Submitting plan with workouts:', planToSubmit.workouts?.length || 0);
+    console.log('Workouts data:', planToSubmit.workouts);
+    console.log('Full plan object:', planToSubmit);
     
     // Create the new plan (you'll need to add this to WorkoutContext)
     const plan = {
-      ...newPlan,
-      current: false,
+      ...planToSubmit,
       progress: '0%',
       workoutsCompleted: 0,
     };
     
+    console.log('Plan object to be created:', plan);
+    console.log('Workouts to be passed to addPlan:', planToSubmit.workouts);
     
-    addPlan(plan, newPlan.workouts)
-    console.log('Plans:', allPlans.map(plan => plan.name));
-        setShowAddPlan(false);
-    
-    // Reset form
-    setNewPlan({
-      name: '',
-      goal: '',
-      duration: 1,
-      difficulty: 'Beginner',
-      emoji: '💪',
-      totalWorkouts: 12,
-      workouts: [] as Workout[],
-    });
+    try {
+      console.log('Calling addPlan...');
+      await addPlan(plan, planToSubmit.workouts);
+      console.log('addPlan completed successfully');
+      console.log('Plans:', allPlans.map(plan => plan.name));
+      setShowAddPlan(false);
+      
+      // Reset form
+      setNewPlan({
+        name: '',
+        goal: '',
+        duration: 1,
+        difficulty: 'Beginner',
+        emoji: '💪',
+        totalWorkouts: 12,
+        workouts: [] as Workout[],
+      });
+      console.log('Form reset completed');
+    } catch (error) {
+      console.error('Error submitting plan:', error);
+    }
   };
 
 
@@ -92,13 +120,24 @@ const PlansScreen = () => {
       <ScrollView style={styles.container}>
         <View style={styles.content}>
           {/* -----------Current Plan Overview--------- */}
-          <CurrentPlanOverview
-            selectedEmoji={selectedEmoji}
-            onEmojiPress={() => setShowEmojiPicker(true)}
-          />
+          {allPlans.length > 0 ? (
+            <CurrentPlanOverview
+              selectedEmoji={selectedEmoji}
+              onEmojiPress={() => setShowEmojiPicker(true)}
+            />
+          ) : (
+            <Card style={styles.workoutCard} mode="outlined">
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <Text variant="headlineSmall" style={styles.primaryText}>No Plans Yet</Text>
+                <Text variant="bodyMedium" style={styles.surfaceVariantText}>
+                  Create your first workout plan to get started!
+                </Text>
+              </View>
+            </Card>
+          )}
 
           {/* Plans List */}
-          <AllPlansCard />
+          {allPlans.length > 0 && <AllPlansCard />}
 
           <Card style={[styles.workoutCard, {marginBottom: -2,}]} mode="outlined">
             <TouchableOpacity onPress={() => setShowAddPlan(true)} style={[styles.addWorkoutContent, {marginTop: -16}]}>
@@ -118,18 +157,32 @@ const PlansScreen = () => {
       </ScrollView>
 
       {/* Emoji Picker Modal */}
-      <EmojiPicker
-        visible={showEmojiPicker}
-        selectedEmoji={selectedEmoji}
-        onSelectEmoji={handleEmojiSelect}
-        onDismiss={() => setShowEmojiPicker(false)}
-      />
+      {allPlans.length > 0 && (
+        <EmojiPicker
+          visible={showEmojiPicker}
+          selectedEmoji={selectedEmoji}
+          onSelectEmoji={handleEmojiSelect}
+          onDismiss={() => setShowEmojiPicker(false)}
+        />
+      )}
       <AddPlanModal
         visible={showAddPlan}
         newPlan={newPlan}
         onPlanChange={setNewPlan}
         onSubmit={handleSubmitPlan}
-        onDismiss={() => setShowAddPlan(false)}
+        onDismiss={() => {
+          console.log('Modal closing - resetting newPlan state');
+          setNewPlan({
+            name: '',
+            goal: '',
+            duration: 1,
+            difficulty: 'AI Created',
+            emoji: '💪',
+            totalWorkouts: 12,
+            workouts: [] as Workout[],
+          });
+          setShowAddPlan(false);
+        }}
       />
     </View>
   );
