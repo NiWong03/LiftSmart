@@ -172,7 +172,7 @@ const Schedule: React.FC = () => {
           setIsDetailVisible(true);
         }}
         ampm={true}
-        hourRowHeight={Math.max(40, screenHeight * 0.08)}
+        hourRowHeight={Math.max(35, screenHeight * 0.05)}
         mode={viewMode}
         theme={calendarTheme}
       />
