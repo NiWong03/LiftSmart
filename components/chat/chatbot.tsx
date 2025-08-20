@@ -65,78 +65,51 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
             messages: [
                 { 
                     role: "system", 
-                    content: `Produce a workout plan in two parts: a concise, human-readable response string stating describing the workout plan for the user , followed by the WorkoutPlan payload in JSON format (silently, without prose). The summary should provide a clear overview of the plan purpose, total duration in weeks, total number of workouts, difficulty, and the user’s goal.
-                            Rules:
-                            - Output must be a JSON object with two fields:
-                                - "response": (string) A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
-                                - "plan": (object) The WorkoutPlan payload as specified by the schema in the prompt below.
-                            - Do not include any other text, prose, explanations, or formatting.
-                            - Use only the fields provided in the schemas.
-                            - Continue to follow all the schema and formatting instructions for the WorkoutPlan, Workout, Exercise, and Set objects from the original prompt.
-                            - For all dates, use the format:("YYYY-MM-DD").
-                            - For sets, use arrays with the precise required order and types: [reps, weight, time, rest].
-                            - Do not include id, userId, or any other extraneous fields.
+                    content: `Produce a workout plan in JSON with two fields:
+- "response": A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
+- "plan": object matching the schema below.
 
-                            # Output Format
+Rules:
+- Valid JSON only.
+- No extra fields (omit id, userId).
+- Dates: "YYYY-MM-DD".
+- Time: "h:mm AM/PM".
+- workoutsCompleted = 0; totalWorkouts = workouts.length.
+- Sets: arrays in format [reps:number, weight:string, time:number, rest:number].
+- Difficulty: "Easy" | "Medium" | "Hard".
 
-                            Respond with a single JSON object with the following keys:
-                            - "response": string, a user-facing, high-level description of the plan and confirmation that the correct plan is being created for the user.
-                            - "plan": follow the schema defined below
-                            type Set = [reps: number, weight: string, time: number, rest: number];
+Schemas:
+type Set = [reps:number, weight:string, time:number, rest:number];
 
-                            interface Exercise {
-                            name: string;
-                            sets: fixed-length arrays with exactly 4 items in this order → [reps:number, weight:string, time:number, rest:number]; e.g., [[10, "45 lb", 0, 90], [8, "50 lb", 0, 120]]
-                            description?: string;
-                            }
+interface Exercise {
+  name: string;
+  sets: Set[];
+  description?: string;
+}
 
-                            interface Workout {
-                            // id and userId are assigned by the app; omit them
-                            day: string;                       // e.g., "Monday"
-                            date: ("YYYY-MM-DD");              // e.g., "2025-08-20"
-                            name: string;                      // e.g., "Push Day"
-                            duration: string;                  // e.g., "45 min"
-                            startTime: string;                 // e.g., "8:30 AM"
-                            endTime: string;                   // e.g., "9:15 AM"
-                            exercises: number;                 // must equal exercises_list.length
-                            completed: boolean;                // always false on creation
-                            difficulty: "Easy" | "Medium" | "Hard";
-                            exercises_list: Exercise[];
-                            }
+interface Workout {
+  day: string;
+  date: string;
+  name: string;
+  duration: string;
+  startTime: string;
+  endTime: string;
+  exercises: number;         // = exercises_list.length
+  difficulty: "Easy" | "Medium" | "Hard";
+  exercises_list: Exercise[];
+}
 
-                            interface WorkoutPlan {
-                            name: string;
-                            duration: number;                  // in weeks
-                            progress: string;                  // e.g., "0%"
-                            goal: string;
-                            workoutsCompleted: number;         // 0 on creation
-                            totalWorkouts: number;             // workouts.length
-                            difficulty: "Easy" | "Medium" | "Hard";
-                            emoji: string;                     // e.g., "💪"
-                            workouts: Workout[];               // optional; include to pre-create workouts
-                            }
-
-                            Rules:
-                            - Output valid JSON only.
-                            - Do not include fields not listed above.
-                            - For time, use "h:mm AM/PM".
-                            - For sets, use arrays like [10, "45 lb", 0, 90].
-                            - Set workoutsCompleted = 0 and totalWorkouts = workouts.length.
-
-                            Example:
-                            {
-                            "summary": "The 'Beginner Strength' plan is a 4-week program designed to help you build muscle with 12 total workouts at a Medium difficulty.",
-                            "plan": {
-                                ...WorkoutPlan object (per schema)...
-                            }
-                            }
-
-                            # Notes
-                            - The summary may include placeholders such as [plan goal], [number of weeks], [total workouts], and [difficulty] as needed.
-                            - The summary string must be immediately understandable to the user and must not contain technical JSON-specific terms or field names.
-
-                            # Reminder
-                            Your main objective is to provide a “summary” string alongside the required WorkoutPlan JSON in a single top-level JSON object response, following all structure, formatting, and field restrictions above.`
+interface WorkoutPlan {
+  name: string;
+  duration: number;          // weeks
+  goal: string;
+  workoutsCompleted: number; // 0
+  totalWorkouts: number;     // workouts.length
+  difficulty: "Easy" | "Medium" | "Hard";
+  emoji: string;
+  workouts: Workout[];
+}
+`
                   },
               { role: "user", content: inputText.trim() }
             ],
@@ -236,7 +209,7 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
                   elevation={1}
                 >
                   <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Hello! I'm your AI fitness coach. I can help you with workout suggestions, form tips, nutrition advice, and answer any fitness-related questions. How can I assist you today?
+                    Hello! I'm your AI fitness coach. Please start by describing your fitness goals and I'll create a workout plan for you.
                   </Text>
                 </Surface>
               </View>
