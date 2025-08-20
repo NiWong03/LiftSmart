@@ -158,11 +158,27 @@ const Schedule: React.FC = () => {
 
       <Calendar
         onPressCell={(date) => {
-          const fullMonthName = date.toLocaleDateString('default', {month: 'long'})
-          console.log('you pressed:', fullMonthName, date.getDate(), "at", date.getHours());
+          const fullMonthName = date.toLocaleDateString('default', {month: 'long'});
+          if (viewMode === 'month') {
+            console.log('you pressed:', fullMonthName, date.getDate());
+            // In month view, set the date for the workout
+            setNewWorkout(prev => ({
+              ...prev,
+              date: date.toISOString().split('T')[0],
+              day: date.toLocaleDateString('default', { weekday: 'long' })
+            }));
+          } else {
+            console.log('you pressed:', fullMonthName, date.getDate(), "at", date.getHours());
+            // In week/day view, set both date and time
+            setNewWorkout(prev => ({
+              ...prev,
+              date: date.toISOString().split('T')[0],
+              day: date.toLocaleDateString('default', { weekday: 'long' }),
+              startTime: date.toLocaleTimeString('default', { hour: '2-digit', minute: '2-digit', hour12: false }),
+              endTime: new Date(date.getTime() + 60 * 60 * 1000).toLocaleTimeString('default', { hour: '2-digit', minute: '2-digit', hour12: false })
+            }));
+          }
           setIsModalVisible(true);
-          
-          
         }}
         events={allEvents}
         height={screenHeight}
@@ -175,6 +191,8 @@ const Schedule: React.FC = () => {
         hourRowHeight={Math.max(40, screenHeight * 0.08)}
         mode={viewMode}
         theme={calendarTheme}
+        showAdjacentMonths={true}
+        eventMinHeightForMonthView={22}
       />
 
       <AddWorkoutModal
