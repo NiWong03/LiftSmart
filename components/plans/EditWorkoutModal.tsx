@@ -34,13 +34,25 @@ const parseTimeToDate = (timeString: string): Date => {
   }
   
   try {
-    // console.log('Parsing time string:', `"${timeString}"`);
-    // console.log('Time string length:', timeString.length);
-    // console.log('Time string char codes:', Array.from(timeString).map(c => c.charCodeAt(0)));
-    
     const trimmedTime = timeString.trim();
-    // console.log('Trimmed time string:', `"${trimmedTime}"`);
+    console.log('Parsing time string:', `"${trimmedTime}"`);
     
+    // Check if it's 24-hour format (e.g., "08:00", "14:30")
+    if (trimmedTime.includes(':') && !trimmedTime.includes('AM') && !trimmedTime.includes('PM')) {
+      const [hours, minutes] = trimmedTime.split(':').map(Number);
+      
+      if (isNaN(hours) || isNaN(minutes)) {
+        console.log('Invalid 24-hour format:', timeString);
+        return new Date(); // Return current time as fallback
+      }
+      
+      const result = new Date();
+      result.setHours(hours, minutes, 0, 0);
+      console.log('Parsed 24-hour format result:', result.toLocaleTimeString());
+      return result;
+    }
+    
+    // Handle 12-hour format (e.g., "8:00 AM", "2:30 PM")
     let time, period;
     
     const amIndex = trimmedTime.toUpperCase().lastIndexOf('AM');
@@ -83,7 +95,7 @@ const parseTimeToDate = (timeString: string): Date => {
     
     const result = new Date();
     result.setHours(hour24, minutes, 0, 0);
-    console.log('Parsed result:', result.toLocaleTimeString());
+    console.log('Parsed 12-hour format result:', result.toLocaleTimeString());
     return result;
   } catch (error) {
     console.log('Error parsing time string:', timeString, error);

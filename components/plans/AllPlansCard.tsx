@@ -10,6 +10,12 @@ export default function PlanListCard() {
   const { allPlans } = useWorkout();
   const styles = createPlanStyles(theme);
   
+  // Sort plans to put current plan first
+  const sortedPlans = [...allPlans].sort((a, b) => {
+    if (a.current && !b.current) return -1; // a is current, b is not
+    if (!a.current && b.current) return 1;  // b is current, a is not
+    return 0; 
+  });
 
   const [showPlanDetails, setShowPlanDetails] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<WorkoutPlan | null>(null);
@@ -32,7 +38,7 @@ export default function PlanListCard() {
           </Text>
         ) : (
           <ScrollView style={{ maxHeight: 200 }}>
-            {allPlans.map((plan, index) => (
+            {sortedPlans.map((plan, index) => (
               <View key={plan.planID}>
                 <View style={{ 
                   flexDirection: 'row', 
@@ -60,7 +66,7 @@ export default function PlanListCard() {
                     Details
                   </Button>
                 </View>
-                {index < allPlans.length - 1 && <Divider style={{ marginVertical: 4 }} />}
+                {index < sortedPlans.length - 1 && <Divider style={{ marginVertical: 4 }} />}
               </View>
             ))}
           </ScrollView>
