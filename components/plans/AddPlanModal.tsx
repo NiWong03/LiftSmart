@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 import ItemCard from '../ItemCard';
@@ -21,7 +21,7 @@ interface AddPlanModalProps {
   visible: boolean;
   newPlan: NewPlan;
   onPlanChange: (plan: NewPlan) => void;
-  onSubmit: () => void;
+  onSubmit: (plan: NewPlan) => void;
   onDismiss: () => void;
 }
 
@@ -38,8 +38,19 @@ export default function AddPlanModal({
   const theme = useTheme();
   const styles = createPlanStyles(theme);
 
-  const [selectedDuration, setSelectedDuration] = useState(newPlan.duration);
-  const [selectedEmoji, setSelectedEmoji] = useState(newPlan.emoji);
+  // Create local plan state to avoid sharing issues
+  const [localPlan, setLocalPlan] = useState({
+    name: '',
+    goal: '',
+    duration: 1,
+    difficulty: 'AI Created',
+    emoji: '💪',
+    totalWorkouts: 12,
+    workouts: [] as Workout[],
+  });
+
+  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [selectedEmoji, setSelectedEmoji] = useState('💪');
   
   // Workout management state
   const [showAddWorkout, setShowAddWorkout] = useState(false);
@@ -53,27 +64,72 @@ export default function AddPlanModal({
     exercises_list: [] as any[]
   });
 
-  const updatePlan = (updates: Partial<NewPlan>) => {
-    onPlanChange({ ...newPlan, ...updates });
+  // Reset modal state when it opens
+  useEffect(() => {
+    if (visible) {
+      console.log('AddPlanModal opened - resetting state');
+      
+      // Reset local plan state
+      setLocalPlan({
+        name: '',
+        goal: '',
+        duration: 1,
+        difficulty: 'AI Created',
+        emoji: '💪',
+        totalWorkouts: 12,
+        workouts: [] as Workout[],
+      });
+      
+      setSelectedDuration(1);
+      setSelectedEmoji('💪');
+      setShowAddWorkout(false);
+      setNewWorkout({
+        day: 'Monday',
+        date: new Date().toISOString().split('T')[0],
+        name: '',
+        startTime: '08:00',
+        endTime: '09:00',
+        difficulty: 'AI Generated',
+        exercises_list: []
+      });
+    }
+  }, [visible]);
+
+  const updateLocalPlan = (updates: Partial<typeof localPlan>) => {
+    setLocalPlan(prev => ({ ...prev, ...updates }));
   };
 
 
   const handleDurationSelect = (duration: number) => {
     setSelectedDuration(duration);
-    updatePlan({ duration });
+    updateLocalPlan({ duration });
 
-    const totalWorkouts = newPlan.workouts.length;
-    updatePlan({ totalWorkouts });
+    const totalWorkouts = localPlan.workouts.length;
+    updateLocalPlan({ totalWorkouts });
   };
 
   const handleEmojiSelect = (emoji: string) => {
     setSelectedEmoji(emoji);
-    updatePlan({ emoji });
+    updateLocalPlan({ emoji });
   };
 
   // Workout management functions
   const handleAddWorkout = () => {
     if (!newWorkout.name.trim()) return;
+
+    console.log('Creating workout with data:', {
+      name: newWorkout.name,
+      exercises_list: newWorkout.exercises_list,
+      exercises_count: newWorkout.exercises_list.length
+    });
+
+    // Convert 24-hour format to 12-hour format
+    const convertTo12Hour = (time24: string) => {
+      const [hours, minutes] = time24.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
 
     // Create workout object with local ID for now
     const workoutData: Workout = {
@@ -83,20 +139,31 @@ export default function AddPlanModal({
       date: Timestamp.fromDate(new Date(newWorkout.date)),
       exercises: newWorkout.exercises_list.length,
       duration: "AI Calculated", // Default duration
-      startTime: newWorkout.startTime,
-      endTime: newWorkout.endTime,
+      startTime: convertTo12Hour(newWorkout.startTime),
+      endTime: convertTo12Hour(newWorkout.endTime),
       userId: 'testUserID', // Will be set by addPlan
       difficulty: newWorkout.difficulty,
       completed: false,
       exercises_list: newWorkout.exercises_list
     };
 
+    console.log('Created workout object:', {
+      name: workoutData.name,
+      exercises: workoutData.exercises,
+      exercises_list: workoutData.exercises_list,
+      exercises_list_length: workoutData.exercises_list?.length || 0,
+      startTime: workoutData.startTime,
+      endTime: workoutData.endTime
+    });
+
     // Update local plan state only
-    const updatedWorkouts = [...(newPlan.workouts || []), workoutData];
-    updatePlan({ 
+    const updatedWorkouts = [...(localPlan.workouts || []), workoutData];
+    updateLocalPlan({ 
       workouts: updatedWorkouts,
       totalWorkouts: updatedWorkouts.length 
     });
+    
+    console.log('Updated plan workouts count:', updatedWorkouts.length);
     
     setShowAddWorkout(false);
     
@@ -113,8 +180,8 @@ export default function AddPlanModal({
   };
 
   const handleRemoveWorkout = (workoutId: string) => {
-    const updatedWorkouts = newPlan.workouts.filter(w => w.id !== workoutId);
-    updatePlan({ 
+    const updatedWorkouts = localPlan.workouts.filter(w => w.id !== workoutId);
+    updateLocalPlan({ 
       workouts: updatedWorkouts,
       totalWorkouts: updatedWorkouts.length 
     });
@@ -174,8 +241,8 @@ export default function AddPlanModal({
                   Plan Name
                 </Text>
                 <TextInput
-                  value={newPlan.name}
-                  onChangeText={(text) => updatePlan({ name: text })}
+                  value={localPlan.name}
+                  onChangeText={(text) => updateLocalPlan({ name: text })}
                   placeholder="Enter plan name (e.g., Summer Shred, Strength Building)"
                   style={styles.textInput}
                   mode="outlined"
@@ -188,8 +255,8 @@ export default function AddPlanModal({
                   Goal
                 </Text>
                 <TextInput
-                  value={newPlan.goal}
-                  onChangeText={(text) => updatePlan({ goal: text })}
+                  value={localPlan.goal}
+                  onChangeText={(text) => updateLocalPlan({ goal: text })}
                   placeholder="What do you want to achieve? (e.g., Lose weight, Build muscle)"
                   style={styles.textInput}
                   mode="outlined"
@@ -204,10 +271,10 @@ export default function AddPlanModal({
                   Duration (weeks)
                 </Text>
                 <TextInput
-                  value={newPlan.duration?.toString() || ''}
+                  value={localPlan.duration?.toString() || ''}
                   onChangeText={(text) => {
                     const input = parseInt(text) || 0;
-                    updatePlan({ duration: input });
+                    updateLocalPlan({ duration: input });
                     setSelectedDuration(input);
                   }}
                   placeholder="Enter number of weeks"
@@ -223,7 +290,7 @@ export default function AddPlanModal({
               <View style={styles.formField}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <Text variant="labelLarge" style={styles.primaryTextRegular}>
-                    Workouts ({newPlan.workouts?.length || 0})
+                    Workouts ({localPlan.workouts?.length || 0})
                   </Text>
                   <Button
                     mode="outlined"
@@ -236,9 +303,9 @@ export default function AddPlanModal({
                 </View>
                 
                 {/* Workout List */}
-                {newPlan.workouts && newPlan.workouts.length > 0 && (
+                {localPlan.workouts && localPlan.workouts.length > 0 && (
                   <View>
-                    {newPlan.workouts.map((workout) => (
+                    {localPlan.workouts.map((workout) => (
                       <ItemCard
                         key={workout.id}
                         id={workout.id}
@@ -255,10 +322,15 @@ export default function AddPlanModal({
               <View style={styles.submitContainer}>
                 <Button
                   mode="contained"
-                  onPress={onSubmit}
+                  onPress={() => {
+                    console.log('Submit button pressed in AddPlanModal');
+                    console.log('Current localPlan state:', localPlan);
+                    console.log('Workouts in plan:', localPlan.workouts?.length || 0);
+                    onSubmit(localPlan);
+                  }}
                   style={styles.submitButton}
                   contentStyle={styles.submitButtonContent}
-                  disabled={!newPlan.name.trim() || !newPlan.goal.trim()}
+                  disabled={!localPlan.name.trim() || !localPlan.goal.trim()}
                 >
                   Create Plan
                 </Button>
