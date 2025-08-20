@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
-import { IconButton, Surface, Text, useTheme, TextInput, Button } from 'react-native-paper';
+import { IconButton, Surface, Text, useTheme, TextInput, Button, Switch } from 'react-native-paper';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
 import { createPlanStyles } from './styles';
 
@@ -14,12 +14,16 @@ interface EditPlanModalProps {
 export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: EditPlanModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { updatePlan } = useWorkout();
+  const { updatePlan, deleteWorkout, workouts, deletePlan, allPlans } = useWorkout();
   
   const [planName, setPlanName] = useState(plan.name);
   const [planDuration, setPlanDuration] = useState(plan.duration.toString());
   const [planGoal, setPlanGoal] = useState(plan.goal);
+  const [isCurrent, setIsCurrent] = useState(plan.current);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if this is the only plan - if so, disable the current switch
+  const isOnlyPlan = allPlans.length === 1;
 
   const handleSave = async () => {
     if (!planName.trim()) return;
@@ -30,7 +34,8 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
       const updatedPlan = {
         name: planName.trim(),
         duration: parseInt(planDuration) || plan.duration,
-        goal: planGoal.trim()
+        goal: planGoal.trim(),
+        current: isCurrent
       };
       
       // Update in Firebase and context
@@ -52,11 +57,12 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
     setPlanName(plan.name);
     setPlanDuration(plan.duration.toString());
     setPlanGoal(plan.goal);
+    setIsCurrent(plan.current);
     onDismiss();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
         <Surface style={[styles.planDetailsModal, { maxHeight: '80%' }]}>
           <View style={styles.modalHeader}>
@@ -108,6 +114,27 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
                   mode="outlined"
                   multiline
                   numberOfLines={3}
+                />
+              </View>
+
+              {/* Set as Current Plan */}
+              <View style={[styles.formField, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
+                    Set as Current Plan
+                  </Text>
+                  <Text variant="bodySmall" style={[styles.surfaceVariantText, isOnlyPlan && { color: theme.colors.onBackground }]}>
+                    {isOnlyPlan 
+                      ? "This is your only plan, so it must remain current"
+                      : "This plan will appear as your active plan on the main page"
+                    }
+                  </Text>
+                </View>
+                <Switch
+                  value={isCurrent}
+                  onValueChange={setIsCurrent}
+                  color={theme.colors.primary}
+                  disabled={isOnlyPlan}
                 />
               </View>
 

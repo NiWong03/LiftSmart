@@ -19,7 +19,7 @@ interface PlanDetailsModalProps {
 function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans } = useWorkout();
+  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans, deleteWorkout, deletePlan } = useWorkout();
 
   // Get the updated plan data from context instead of using the prop
   const updatedPlan = allPlans.find(p => p.planID === plan.planID) || plan;
@@ -30,6 +30,7 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [showEditPlan, setShowEditPlan] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Reset expanded workouts when modal opens
   useEffect(() => {
@@ -126,8 +127,44 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
     }
   };
 
+  // Handle plan deletion
+  const handlePlanDeleted = () => {
+    console.log('Plan deleted, closing modal');
+    setShowEditPlan(false);
+    onDismiss();
+  };
+
+  const handleDelete = async () => {
+    try {
+      console.log('Starting plan deletion for:', updatedPlan.planID);
+      
+      // Close the confirmation dialog first
+      setShowDeleteConfirm(false);
+      
+      // Delete all workouts associated with this plan
+      const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
+      console.log('Deleting', planWorkouts.length, 'workouts associated with plan');
+      
+      for (const workout of planWorkouts) {
+        await deleteWorkout(workout.id);
+      }
+      
+      // Delete the plan itself
+      await deletePlan(updatedPlan.planID);
+      
+      console.log('Plan and associated workouts deleted successfully');
+      
+      // Close the modal
+      onDismiss();
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      // Reopen confirmation dialog if deletion failed
+      setShowDeleteConfirm(true);
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
         <Surface style={styles.planDetailsModal}>
           <View style={styles.modalHeader}>
@@ -173,6 +210,23 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
               </TouchableOpacity>
             </Card>
 
+            {/* Delete Plan Button */}
+            <Card style={[styles.addWorkoutCard, { marginTop: 16 }]} mode="outlined">
+              <TouchableOpacity onPress={() => setShowDeleteConfirm(true)} style={styles.addWorkoutContent}>
+                <IconButton
+                  icon="delete"
+                  size={32}
+                  iconColor={theme.colors.error}
+                />
+                <Text variant="titleMedium" style={[styles.primaryTextRegular, { marginTop: 8, color: theme.colors.error }]}>
+                  Delete Plan
+                </Text>
+                <Text variant="bodySmall" style={[styles.surfaceVariantText, styles.centeredText, { marginTop: 4 }]}>
+                  Permanently delete this plan and all workouts
+                </Text>
+              </TouchableOpacity>
+            </Card>
+
             <AddWorkoutModal
             visible={showAddWorkout}
             newWorkout={newWorkout}
@@ -183,13 +237,48 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
             
             <EditPlanModal
               visible={showEditPlan}
-              plan={updatedPlan} // Pass the current plan as the plan to edit
+              plan={updatedPlan}
               onDismiss={() => setShowEditPlan(false)}
               onUpdate={(updatedPlan) => {
                 console.log('Plan updated:', updatedPlan);
                 setShowEditPlan(false);
               }}
             />
+            
+            {/* Delete Confirmation Modal */}
+            <Modal visible={showDeleteConfirm} transparent animationType="fade">
+              <View style={styles.modalOverlay}>
+                <Surface style={[styles.planDetailsModal, { maxHeight: '40%' }]}>
+                  <View style={styles.modalHeader}>
+                    <Text variant="headlineMedium" style={styles.primaryText}>Delete Plan</Text>
+                  </View>
+                  <View style={{ padding: 16 }}>
+                    <Text variant="bodyLarge" style={styles.primaryTextRegular}>
+                      Are you sure you want to delete "{updatedPlan.name}"? This action cannot be undone and will delete all workouts in this plan.
+                    </Text>
+                    <View style={[styles.submitContainer, { marginTop: 24 }]}>
+                      <Button
+                        mode="outlined"
+                        onPress={() => setShowDeleteConfirm(false)}
+                        style={[styles.submitButton, { marginBottom: 12 }]}
+                        contentStyle={styles.submitButtonContent}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        mode="contained"
+                        onPress={handleDelete}
+                        style={styles.submitButton}
+                        contentStyle={styles.submitButtonContent}
+                        buttonColor={theme.colors.error}
+                      >
+                        Delete
+                      </Button>
+                    </View>
+                  </View>
+                </Surface>
+              </View>
+            </Modal>
             </View>
           </ScrollView>
         </Surface>
