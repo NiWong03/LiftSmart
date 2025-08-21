@@ -1,10 +1,9 @@
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
-import WorkoutCard from '@/components/plans/WorkoutCard';
 import EditPlanModal from '@/components/plans/EditPlanModal';
-import { Timestamp } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react';
+import WorkoutCard from '@/components/plans/WorkoutCard';
+import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Card, IconButton, Surface, Text, useTheme, TextInput, Button } from 'react-native-paper';
+import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
 import { createPlanStyles } from './styles';
 
@@ -166,10 +165,10 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <Surface style={styles.planDetailsModal}>
+        <Surface style={[styles.planDetailsModal, { position: 'relative' }]}>
           <View style={styles.modalHeader}>
-            <Text variant="headlineMedium" style={styles.primaryText}>{updatedPlan.name} • {updatedPlan.duration} Weeks</Text>
-            <View style={{ flexDirection: 'row' }}>
+            <Text variant="headlineMedium" style={[styles.primaryText, { paddingRight: 72 }]}>{updatedPlan.name} • {updatedPlan.duration} Weeks</Text>
+            <View style={{ position: 'absolute', top: 8, right: 8, flexDirection: 'row' }}>
               <IconButton icon="pencil" onPress={() => setShowEditPlan(true)} />
               <IconButton icon="close" onPress={onDismiss} />
             </View>
