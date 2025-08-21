@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/firebaseAuth/FirebaseConfig';
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 
@@ -513,23 +513,28 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
       const getWorkoutEvents = (): CalendarEvent[] => {
-      return workouts.map(workout => {
-        const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
-      
-      // Parse stored time strings to actual Date objects
-      const startTime = parseTimeToDate(workout.startTime, workoutDate);
-      const endTime = parseTimeToDate(workout.endTime, workoutDate);
+        // Only return workouts that belong to the current plan
+        const currentPlanWorkouts = workouts.filter(workout => 
+          workout.planId === currentPlan.planID
+        );
+        
+        return currentPlanWorkouts.map(workout => {
+          const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
 
-      return {
-        title: workout.name,
-        start: startTime,
-        end: endTime,
-        workoutId: workout.id,
-        type: 'workout' as const,
-        workout: workout
+          // Parse stored time strings to actual Date objects
+          const startTime = parseTimeToDate(workout.startTime, workoutDate);
+          const endTime = parseTimeToDate(workout.endTime, workoutDate);
+
+          return {
+            title: workout.name,
+            start: startTime,
+            end: endTime,
+            workoutId: workout.id,
+            type: 'workout' as const,
+            workout: workout
+          };
+        });
       };
-    });
-  };
 
  
   const parseTimeToDate = (timeString: string, date: Date): Date => {
