@@ -1,11 +1,12 @@
 import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
-import { router } from 'expo-router';
-import { Timestamp } from 'firebase/firestore';
+
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { createPlanStyles } from '../styles';
+import { createPlanStyles } from './styles';
+import { router } from 'expo-router';
+import { Timestamp } from 'firebase/firestore';
 
 
 interface CurrentPlanOverviewProps {

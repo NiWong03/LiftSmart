@@ -1,10 +1,10 @@
 import { useWorkout, type Workout } from '@/components/plans/WorkoutContext';
 import { Timestamp } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Text, useTheme } from 'react-native-paper';
+import { createPlanStyles } from './styles';
 import EditWorkoutModal from '../plans/EditWorkoutModal';
-import { createPlanStyles } from '../styles';
 
 interface WorkoutCardProps {
   workout: Workout;
