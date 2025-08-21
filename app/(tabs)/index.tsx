@@ -1,5 +1,6 @@
 import { ChatbotModal } from '@/components/chat/chatbot';
 import AddPlanModal from '@/components/plans/AddPlanModal';
+import EditPlanHandler from '@/components/plans/EditPlanHandler';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
@@ -15,6 +16,8 @@ const HomeScreen = () => {
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const [chatbotVisible, setChatbotVisible] = useState(false);
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
+  const [showEditHandler, setShowEditHandler] = useState(false);
+  const [pendingEditResponse, setPendingEditResponse] = useState<any>(null);
   const authUserId = FIREBASE_AUTH.currentUser?.uid ?? '';
 
   const [draftPlan, setDraftPlan] = useState({
@@ -355,6 +358,11 @@ const HomeScreen = () => {
             setShowAddPlanModal(true);
           }
         }
+        onRequestEditPlan={(response) => {
+          setPendingEditResponse(response);
+          setChatbotVisible(false);
+          setShowEditHandler(true);
+        }}
       />
 
       <AddPlanModal
@@ -382,6 +390,19 @@ const HomeScreen = () => {
           }
         }}
         onDismiss={() => setShowAddPlanModal(false)}
+      />
+
+      <EditPlanHandler
+        visible={showEditHandler}
+        aiResponse={pendingEditResponse}
+        onDismiss={() => {
+          setShowEditHandler(false);
+          setPendingEditResponse(null);
+        }}
+        onComplete={() => {
+          setShowEditHandler(false);
+          setPendingEditResponse(null);
+        }}
       />
     </View>
   );

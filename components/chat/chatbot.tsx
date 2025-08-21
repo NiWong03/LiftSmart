@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import React, { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
+import { useWorkout, WorkoutPlan, Workout } from '../plans/WorkoutContext';
 
 const openai = new OpenAI({
     apiKey: API_KEY,
@@ -13,6 +14,7 @@ interface ChatbotModalProps {
   onDismiss: () => void;
   onParsedResponse?: (data: any) => void;
   onRequestOpenAddPlan?: () => void;
+  onRequestEditPlan?: (edits: any) => void;
 }
 
 interface Message {
@@ -22,13 +24,21 @@ interface Message {
     timestamp: Date;
   }
 
-export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, onParsedResponse, onRequestOpenAddPlan }) => {
+export const ChatbotModal: React.FC<ChatbotModalProps> = ({ 
+  visible, 
+  onDismiss, 
+  onParsedResponse, 
+  onRequestOpenAddPlan,
+  onRequestEditPlan 
+}) => {
   const theme = useTheme();
+  const { currentPlan, workouts } = useWorkout();
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [hasDraftPlan, setHasDraftPlan] = useState(false);
+  const [hasEditSuggestions, setHasEditSuggestions] = useState(false);
 
   // Add keyboard listeners
   useEffect(() => {
@@ -59,13 +69,73 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
     setInputText('');
     setIsLoading(true);
 
+    // Determine if this is an edit request by checking for edit-related keywords
+    // Specific keywords to avoid false positives
+    const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
+    const addKeywords = ['add to', 'add more', 'add another'];
+    
+    // Check for edit keywords
+    const hasEditKeyword = editKeywords.some(keyword => 
+      inputText.toLowerCase().includes(keyword)
+    );
+    
+    // Check for add keywords that modify existing plan
+    const hasAddKeyword = addKeywords.some(keyword => 
+      inputText.toLowerCase().includes(keyword)
+    );
+    
+    // Check if user is referring to current plan
+    const refersToCurrentPlan = inputText.toLowerCase().includes('my plan') || 
+                               inputText.toLowerCase().includes('current plan') ||
+                               inputText.toLowerCase().includes('this plan') ||
+                               inputText.toLowerCase().includes('the plan');
+    
+    const isEditRequest = (hasEditKeyword || hasAddKeyword || refersToCurrentPlan) && currentPlan.name;
+
     try { 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                { 
-                    role: "system", 
-                    content: `Produce a workout plan in JSON with two fields:
+        let systemPrompt = '';
+        
+        if (isEditRequest && currentPlan.name) {
+          // For edits, include current plan data
+          const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
+          systemPrompt = `You are an AI fitness coach editing an existing workout plan.
+
+RESPONSE FORMAT:
+Return JSON with:
+- "action": "edit"
+- "response": A clear summary of what you're changing
+- "plan": The complete updated plan object (replace the entire plan)
+
+CURRENT PLAN TO EDIT:
+${JSON.stringify({
+  name: currentPlan.name,
+  goal: currentPlan.goal,
+  duration: currentPlan.duration,
+  difficulty: currentPlan.difficulty,
+  emoji: currentPlan.emoji,
+  workouts: currentPlanWorkouts.map(w => ({
+    id: w.id,
+    name: w.name,
+    day: w.day,
+    date: w.date,
+    startTime: w.startTime,
+    endTime: w.endTime,
+    difficulty: w.difficulty,
+    exercises_list: w.exercises_list
+  }))
+})}
+
+RULES:
+- Return the complete updated plan, not just changes
+- Preserve existing workout IDs
+- Valid JSON only, no markdown
+- Dates: "YYYY-MM-DD" format
+- Time: "h:mm AM/PM" format
+- Sets: arrays in format [reps:number, weight:string, time:number, rest:number]
+- Difficulty: "Easy" | "Medium" | "Hard"`;
+        } else {
+          // For new plans, use the original create prompt
+          systemPrompt = `Produce a workout plan in JSON with two fields:
 - "response": A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
 - "plan": object matching the schema below.
 
@@ -111,9 +181,17 @@ interface WorkoutPlan {
   difficulty: "Easy" | "Medium" | "Hard";
   emoji: string;
   workouts: Workout[];
-}`
-                  },
-              { role: "user", content: inputText.trim() }
+}`;
+        }
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { 
+                    role: "system", 
+                    content: systemPrompt
+                },
+                { role: "user", content: inputText.trim() }
             ],
         });
         console.log("AI Response:", response.choices[0].message.content);
@@ -122,10 +200,19 @@ interface WorkoutPlan {
                 const responseContent = response.choices[0].message.content;
                 if (!responseContent) return;
                 const parsedResponse = JSON.parse(responseContent); 
-                onParsedResponse?.(parsedResponse);
-                if (parsedResponse?.plan) {
+                
+                // Handle different action types
+                if (parsedResponse.action === 'edit') {
+                  onRequestEditPlan?.(parsedResponse);
+                  setHasEditSuggestions(true);
+                  setHasDraftPlan(false);
+                } else {
+                  // Create new plan (default behavior)
+                  onParsedResponse?.(parsedResponse);
                   setHasDraftPlan(true);
+                  setHasEditSuggestions(false);
                 }
+                
                 console.log('response parsed!')           
                 const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
@@ -259,6 +346,23 @@ interface WorkoutPlan {
                     <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.tertiary }]} elevation={1}>
                         <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                         Plan is ready. Click here to review!
+                        </Text> 
+                    </Surface>
+                    </TouchableRipple>
+                </View>
+                )}
+              {hasEditSuggestions && (
+                <View style={[styles.messageContainer, styles.assistantMessage]}>
+                    <TouchableRipple
+                    onPress={() => onRequestEditPlan?.({})}
+                    borderless={false}
+                    style={{ borderRadius: 16 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Review plan changes"
+                    >
+                    <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.secondary }]} elevation={1}>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                        Changes ready! Click here to review.
                         </Text> 
                     </Surface>
                     </TouchableRipple>
