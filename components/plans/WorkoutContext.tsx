@@ -513,17 +513,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
       const getWorkoutEvents = (): CalendarEvent[] => {
-        const currentPlanWorkouts = workouts.filter(workout => 
-          workout.planId === currentPlan.planID
-        );
-        
-        return currentPlanWorkouts.map(workout => {
-          const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
-        
-        // Parse stored time strings to actual Date objects
-          const startTime = parseTimeToDate(workout.startTime, workoutDate);
-          const endTime = parseTimeToDate(workout.endTime, workoutDate);
-
+      return workouts.map(workout => {
+        const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
+      
+      // Parse stored time strings to actual Date objects
+      const startTime = parseTimeToDate(workout.startTime, workoutDate);
+      const endTime = parseTimeToDate(workout.endTime, workoutDate);
 
       return {
         title: workout.name,
