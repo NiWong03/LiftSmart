@@ -2,9 +2,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
-import AddExerciseModal from './AddExerciseModal';
 import ItemCard from '../ItemCard';
+import { createPlanStyles } from '../styles';
+import AddExerciseModal from './AddExerciseModal';
 
 interface NewWorkout {
   day: string;

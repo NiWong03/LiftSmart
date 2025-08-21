@@ -2,7 +2,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Card, IconButton, Text, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './plans/styles';
+import { createPlanStyles } from './styles';
 
 interface ItemCardProps {
   id: string | number;

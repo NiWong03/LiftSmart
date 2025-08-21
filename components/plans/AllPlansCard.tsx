@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Button, Card, Divider, Text, useTheme } from 'react-native-paper';
+import { createPlanStyles } from '../styles';
 import PlanDetailsModal from './PlanDetailsModal';
 import { useWorkout, WorkoutPlan } from './WorkoutContext';
-import { createPlanStyles } from './styles';
 
 export default function PlanListCard() {
   const theme = useTheme();

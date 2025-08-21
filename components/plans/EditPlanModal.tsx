@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
-import { IconButton, Surface, Text, useTheme, TextInput, Button, Switch } from 'react-native-paper';
+import { Button, IconButton, Surface, Switch, Text, TextInput, useTheme } from 'react-native-paper';
+import { createPlanStyles } from '../styles';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
-import { createPlanStyles } from './styles';
 
 interface EditPlanModalProps {
   visible: boolean;

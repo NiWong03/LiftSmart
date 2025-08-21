@@ -1,12 +1,11 @@
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
-import WorkoutCard from '@/components/plans/WorkoutCard';
 import EditPlanModal from '@/components/plans/EditPlanModal';
-import { Timestamp } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react';
+import WorkoutCard from '@/components/plans/WorkoutCard';
+import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Card, IconButton, Surface, Text, useTheme, TextInput, Button } from 'react-native-paper';
+import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { createPlanStyles } from '../styles';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
-import { createPlanStyles } from './styles';
 
 
 

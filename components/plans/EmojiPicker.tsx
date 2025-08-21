@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, Modal, TouchableOpacity, View } from 'react-native';
 import { Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
+import { createPlanStyles } from '../styles';
 
 interface EmojiPickerProps {
   visible: boolean;

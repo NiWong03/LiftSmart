@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
+import { createPlanStyles } from '../styles';
 import { Exercise, Set } from './WorkoutContext';
 
 interface AddExerciseModalProps {

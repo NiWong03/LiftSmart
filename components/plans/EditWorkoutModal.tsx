@@ -1,11 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { Button, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
-import AddExerciseModal from './AddExerciseModal';
 import ItemCard from '../ItemCard';
-import { Workout, Exercise } from './WorkoutContext';
+import { createPlanStyles } from '../styles';
+import AddExerciseModal from './AddExerciseModal';
+import { Workout } from './WorkoutContext';
 
 interface EditWorkoutModalProps {
   visible: boolean;

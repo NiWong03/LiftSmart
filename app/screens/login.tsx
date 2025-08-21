@@ -1,4 +1,4 @@
-import { createPlanStyles } from '@/components/plans/styles';
+import { createPlanStyles } from '@/components/styles';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
