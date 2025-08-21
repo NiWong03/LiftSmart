@@ -1,11 +1,12 @@
 import { Timestamp } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react';
-import { Modal, ScrollView, View } from 'react-native';
-import { Button, Card, Divider, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, View } from 'react-native';
+import { Button, Card, Divider, IconButton, Modal as PaperModal, Portal, Surface, Text, TextInput, useTheme, } from 'react-native-paper';
 import ItemCard from '../ItemCard';
 import AddWorkoutModal from './AddWorkoutModal';
 import { createPlanStyles } from './styles';
 import { Workout } from './WorkoutContext';
+
 
 interface NewPlan {
   name: string;
@@ -64,24 +65,22 @@ export default function AddPlanModal({
     exercises_list: [] as any[]
   });
 
-  // Reset modal state when it opens
+  // Populate local state from incoming newPlan when visible
   useEffect(() => {
     if (visible) {
-      console.log('AddPlanModal opened - resetting state');
-      
-      // Reset local plan state
+      const incoming = newPlan || ({} as any);
       setLocalPlan({
-        name: '',
-        goal: '',
-        duration: 1,
-        difficulty: 'AI Created',
-        emoji: '💪',
-        totalWorkouts: 12,
-        workouts: [] as Workout[],
+        name: incoming.name || '',
+        goal: incoming.goal || '',
+        duration: incoming.duration || 1,
+        difficulty: incoming.difficulty || 'AI Created',
+        emoji: incoming.emoji || '💪',
+        totalWorkouts: incoming.totalWorkouts || (incoming.workouts?.length || 0),
+        workouts: (incoming.workouts || []) as Workout[],
       });
-      
-      setSelectedDuration(1);
-      setSelectedEmoji('💪');
+
+      setSelectedDuration(incoming.duration || 1);
+      setSelectedEmoji(incoming.emoji || '💪');
       setShowAddWorkout(false);
       setNewWorkout({
         day: 'Monday',
@@ -93,7 +92,7 @@ export default function AddPlanModal({
         exercises_list: []
       });
     }
-  }, [visible]);
+  }, [visible, newPlan]);
 
   const updateLocalPlan = (updates: Partial<typeof localPlan>) => {
     setLocalPlan(prev => ({ ...prev, ...updates }));
@@ -210,15 +209,21 @@ export default function AddPlanModal({
       </View>
     </Card>
   );
-
+// changed to paper modal to be compatible with chatbot page
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onDismiss}
-    >
-      <View style={styles.modalOverlay}>
+    <Portal>
+      <PaperModal
+        visible={visible}
+        onDismiss={onDismiss}
+        contentContainerStyle={[{
+          alignSelf: 'center',
+          width: '90%',
+          height: '80%',
+          borderRadius: 16,
+          overflow: 'hidden',
+          backgroundColor: theme.colors.surface,
+        }]}
+      >
         <Surface style={styles.addWorkoutModal} elevation={4}>
           <ScrollView>
             <View style={styles.modalHeader}>
@@ -338,7 +343,7 @@ export default function AddPlanModal({
             </View>
           </ScrollView>
         </Surface>
-
+        
         {/* Add Workout Modal */}
         <AddWorkoutModal
           visible={showAddWorkout}
@@ -347,7 +352,7 @@ export default function AddPlanModal({
           onSubmit={handleAddWorkout}
           onDismiss={() => setShowAddWorkout(false)}
         />
-      </View>
-    </Modal>
+      </PaperModal>
+    </Portal>
   );
 }
