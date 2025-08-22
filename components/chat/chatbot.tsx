@@ -1,8 +1,8 @@
 import { API_KEY } from "@/OpenAI.config";
 import OpenAI from "openai";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
+import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme, ActivityIndicator } from 'react-native-paper';
 import { useWorkout, WorkoutPlan, Workout } from '../plans/WorkoutContext';
 
 const openai = new OpenAI({
@@ -15,6 +15,8 @@ interface ChatbotModalProps {
   onParsedResponse?: (data: any) => void;
   onRequestOpenAddPlan?: () => void;
   onRequestEditPlan?: (edits: any) => void;
+  onEditApplied?: () => void;
+  editApplied?: boolean;
 }
 
 interface Message {
@@ -29,7 +31,9 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   onDismiss, 
   onParsedResponse, 
   onRequestOpenAddPlan,
-  onRequestEditPlan 
+  onRequestEditPlan,
+  onEditApplied,
+  editApplied
 }) => {
   const theme = useTheme();
   const { currentPlan, workouts } = useWorkout();
@@ -39,6 +43,11 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [hasDraftPlan, setHasDraftPlan] = useState(false);
   const [hasEditSuggestions, setHasEditSuggestions] = useState(false);
+  const [storedEditResponse, setStoredEditResponse] = useState<any>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingMessage, setTypingMessage] = useState('');
+  const [fullTypingMessage, setFullTypingMessage] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Add keyboard listeners
   useEffect(() => {
@@ -55,8 +64,68 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     };
   }, []);
 
+  // Auto-scroll to bottom when modal opens
+  useEffect(() => {
+    if (visible) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [visible]);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  // Clear edit suggestions only when edits are applied, not when modal is closed
+  useEffect(() => {
+    if (editApplied) {
+      setHasEditSuggestions(false);
+      setHasDraftPlan(false);
+      setStoredEditResponse(null);
+    }
+  }, [editApplied]);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (isTyping && fullTypingMessage) {
+      let currentIndex = 0;
+      const interval = setInterval(() => {
+        if (currentIndex <= fullTypingMessage.length) {
+          setTypingMessage(fullTypingMessage.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+          setIsTyping(false);
+          setTypingMessage('');
+          // Add the complete message to chat
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: fullTypingMessage,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMessage]);
+          setFullTypingMessage('');
+        }
+      }, 10); // Adjust speed here (lower = faster)
+
+      return () => clearInterval(interval);
+    }
+  }, [isTyping, fullTypingMessage]);
+
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
+
+    // Clear any existing edit suggestions when user sends a new message
+    setHasEditSuggestions(false);
+    setHasDraftPlan(false);
+    setStoredEditResponse(null);
 
     const userMessage: Message = {
         id: Date.now().toString(),
@@ -69,28 +138,45 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     setInputText('');
     setIsLoading(true);
 
-    // Determine if this is an edit request by checking for edit-related keywords
-    // Specific keywords to avoid false positives
+    // Determine the type of request
+    const inputLower = inputText.toLowerCase();
+    
+    // Keywords for different types of requests
     const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
-    const addKeywords = ['add to', 'add more', 'add another'];
+    const addKeywords = ['add to', 'add more', 'add another', 'add', 'append'];
+    const planKeywords = ['create', 'make', 'build', 'generate', 'new plan', 'workout plan', 'training plan'];
+    const adviceKeywords = ['advice', 'tip', 'help', 'how to', 'how do','what should', 'recommend', 'suggest', 'best way', 'proper form', 'technique', 'nutrition', 'diet', 'supplement', 'recovery', 'injury', 'pain', 'motivation', 'consistency', 'how can', 'how should', 'explain', 'elaborate'];
     
     // Check for edit keywords
     const hasEditKeyword = editKeywords.some(keyword => 
-      inputText.toLowerCase().includes(keyword)
+      inputLower.includes(keyword)
     );
     
     // Check for add keywords that modify existing plan
     const hasAddKeyword = addKeywords.some(keyword => 
-      inputText.toLowerCase().includes(keyword)
+      inputLower.includes(keyword)
     );
     
     // Check if user is referring to current plan
-    const refersToCurrentPlan = inputText.toLowerCase().includes('my plan') || 
-                               inputText.toLowerCase().includes('current plan') ||
-                               inputText.toLowerCase().includes('this plan') ||
-                               inputText.toLowerCase().includes('the plan');
+    const refersToCurrentPlan = inputLower.includes('my plan') || 
+                               inputLower.includes('current plan') ||
+                               inputLower.includes('this plan') ||
+                               inputLower.includes('the plan');
     
+    // Check for plan creation keywords
+    const hasPlanKeyword = planKeywords.some(keyword => 
+      inputLower.includes(keyword)
+    );
+    
+    // Check for general fitness advice keywords
+    const hasAdviceKeyword = adviceKeywords.some(keyword => 
+      inputLower.includes(keyword)
+    );
+    
+    // Determine request type
     const isEditRequest = (hasEditKeyword || hasAddKeyword || refersToCurrentPlan) && currentPlan.name;
+    const isPlanRequest = hasPlanKeyword || (!hasAdviceKeyword && !isEditRequest);
+    const isAdviceRequest = hasAdviceKeyword && !isEditRequest;
 
     try { 
         let systemPrompt = '';
@@ -132,7 +218,36 @@ RULES:
 - Dates: "YYYY-MM-DD" format
 - Time: "h:mm AM/PM" format
 - Sets: arrays in format [reps:number, weight:string, time:number, rest:number]
-- Difficulty: ""`;
+- Difficulty: "Easy" | "Medium" | "Hard"`;
+        } else if (isAdviceRequest) {
+          // For general fitness advice
+          systemPrompt = `You are an experienced fitness coach and personal trainer. Provide helpful, accurate, and motivational fitness advice.
+
+RESPONSE FORMAT:
+Return a natural, conversational response that:
+- Addresses the user's specific question or concern
+- Provides practical, actionable advice
+- Uses encouraging and supportive language
+- Keeps responses concise but informative (2-4 sentences)
+- Focuses on safety and proper technique
+- Encourages consistency and gradual progress
+
+TOPICS YOU CAN HELP WITH:
+- Exercise technique and form
+- Workout programming and structure
+- Nutrition and diet advice
+- Recovery and rest
+- Injury prevention and management
+- Motivation and consistency
+- General fitness principles
+- Equipment usage and alternatives
+
+IMPORTANT:
+- Always prioritize safety and proper form
+- Encourage consulting healthcare professionals for medical concerns
+- Be encouraging but realistic
+- Provide specific, actionable advice when possible
+- Use a friendly, supportive tone`;
         } else {
           // For new plans, use the original create prompt
           systemPrompt = `Produce a workout plan in JSON with two fields:
@@ -199,39 +314,40 @@ interface WorkoutPlan {
         try {
                 const responseContent = response.choices[0].message.content;
                 if (!responseContent) return;
-                const parsedResponse = JSON.parse(responseContent); 
                 
-                // Handle different action types
-                if (parsedResponse.action === 'edit') {
-                  onRequestEditPlan?.(parsedResponse);
-                  setHasEditSuggestions(true);
-                  setHasDraftPlan(false);
-                } else {
-                  // Create new plan (default behavior)
-                  onParsedResponse?.(parsedResponse);
-                  setHasDraftPlan(true);
-                  setHasEditSuggestions(false);
-                }
-                
-                console.log('response parsed!')           
-                const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: parsedResponse.response || 'Sorry, I couldn\'t generate a response.',
-                timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, aiMessage]);
-        } catch (parseError) {
-            // If not JSON, use the raw response
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.',
-                timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, aiMessage]);
-            console.log(parseError);
-        }
+                                 // Handle different response types
+                 if (isAdviceRequest) {
+                   // For advice requests, start typing animation
+                   setIsTyping(true);
+                   setFullTypingMessage(responseContent);
+                 } else {
+                   // For plan creation/editing, parse JSON
+                   const parsedResponse = JSON.parse(responseContent); 
+                   
+                   // Handle different action types
+                   if (parsedResponse.action === 'edit') {
+                     // Set the new edit suggestions
+                     setHasEditSuggestions(true);
+                     setHasDraftPlan(false);
+                     setStoredEditResponse(parsedResponse);
+                   } else {
+                     // Create new plan (default behavior)
+                     onParsedResponse?.(parsedResponse);
+                     setHasDraftPlan(true);
+                     setHasEditSuggestions(false);
+                   }
+                   
+                   console.log('response parsed!')           
+                   // Start typing animation for the response
+                   setIsTyping(true);
+                   setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
+                 }
+                 } catch (parseError) {
+             // If not JSON, use the raw response with typing animation
+             setIsTyping(true);
+             setFullTypingMessage(response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.');
+             console.log(parseError);
+         }
     }
     catch (error) {
     console.error("OpenAI Error:", error);
@@ -291,6 +407,7 @@ interface WorkoutPlan {
             <ScrollView 
               style={styles.messagesContainer}
               contentContainerStyle={styles.messagesContent}
+              ref={scrollViewRef}
             >
               <View style={styles.welcomeContainer}>
                 <Surface
@@ -298,7 +415,7 @@ interface WorkoutPlan {
                   elevation={1}
                 >
                   <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                    Hello! I'm your AI fitness coach. Please start by describing your fitness goals and I'll create a workout plan for you.
+                    Hello! I'm your AI fitness coach. I can help you create workout plans, provide fitness advice, and answer your training questions. What would you like to work on today?
                   </Text>
                 </Surface>
               </View>
@@ -334,6 +451,36 @@ interface WorkoutPlan {
                 </Surface>
               </View>
               ))}
+              
+                             {/* Loading Indicator */}
+               {isLoading && (
+                 <View style={[styles.messageContainer, styles.assistantMessage]}>
+                   <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
+                     <View style={styles.loadingContainer}>
+                       <ActivityIndicator size="small" color={theme.colors.primary} />
+                       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8 }}>
+                         Thinking...
+                       </Text>
+                     </View>
+                   </Surface>
+                 </View>
+               )}
+
+               {/* Typing Indicator */}
+               {isTyping && (
+                 <View style={[styles.messageContainer, styles.assistantMessage]}>
+                   <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
+                     <Text
+                       variant="bodyMedium"
+                       style={{ color: theme.colors.onSurfaceVariant }}
+                     >
+                       {typingMessage}
+                       <Text style={{ color: theme.colors.primary }}>|</Text>
+                     </Text>
+                   </Surface>
+                 </View>
+               )}
+              
               {hasDraftPlan && (
                 <View style={[styles.messageContainer, styles.assistantMessage]}>
                     <TouchableRipple
@@ -344,7 +491,7 @@ interface WorkoutPlan {
                     accessibilityLabel="Review and create plan"
                     >
                     <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.tertiary }]} elevation={1}>
-                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onPrimary }}>
                         Plan is ready. Click here to review!
                         </Text> 
                     </Surface>
@@ -354,14 +501,18 @@ interface WorkoutPlan {
               {hasEditSuggestions && (
                 <View style={[styles.messageContainer, styles.assistantMessage]}>
                     <TouchableRipple
-                    onPress={() => onRequestEditPlan?.({})}
+                    onPress={() => {
+                      if (storedEditResponse) {
+                        onRequestEditPlan?.(storedEditResponse);
+                      }
+                    }}
                     borderless={false}
                     style={{ borderRadius: 16 }}
                     accessibilityRole="button"
                     accessibilityLabel="Review plan changes"
                     >
                     <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.secondary }]} elevation={1}>
-                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onPrimary }}>
                         Changes ready! Click here to review.
                         </Text> 
                     </Surface>
@@ -486,5 +637,10 @@ const styles = StyleSheet.create({
   messageBubble: {
     padding: 12,
     borderRadius: 16,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
   },
 });
