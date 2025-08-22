@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 
 
@@ -20,6 +20,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
   const { currentPlan, workouts } = useWorkout();
   const styles = createPlanStyles(theme);
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
+  const params = useLocalSearchParams();
   
 
   useEffect(
@@ -46,6 +47,15 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
     // Plan Details Modal--------------------------------
     const [showPlanDetails, setShowPlanDetails] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(currentPlan);
+
+    // Auto-open plan details if requested
+    useEffect(() => {
+      if (params.openDetails === 'true') {
+        setShowPlanDetails(true);
+        // Clear the URL parameter after opening the modal
+        router.replace('/plans');
+      }
+    }, [params.openDetails]);
 
   return (
     <Surface style={styles.planOverviewContainer} elevation={2}>

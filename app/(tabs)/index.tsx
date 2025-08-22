@@ -18,6 +18,7 @@ const HomeScreen = () => {
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [showEditHandler, setShowEditHandler] = useState(false);
   const [pendingEditResponse, setPendingEditResponse] = useState<any>(null);
+  const [editApplied, setEditApplied] = useState(false);
   const authUserId = FIREBASE_AUTH.currentUser?.uid ?? '';
 
   const [draftPlan, setDraftPlan] = useState({
@@ -343,7 +344,10 @@ const HomeScreen = () => {
           size={32}
           iconColor={theme.colors.onPrimaryContainer}
           style={[styles.chatbotButton, { backgroundColor: theme.colors.tertiary }]}
-          onPress={() => setChatbotVisible(true)}
+          onPress={() => {
+            setChatbotVisible(true);
+            setEditApplied(false);
+          }}
         />
       </View>
 
@@ -360,9 +364,13 @@ const HomeScreen = () => {
         }
         onRequestEditPlan={(response) => {
           setPendingEditResponse(response);
-          setChatbotVisible(false);
+          // Don't close the chatbot modal - keep it open so user can return to chat
           setShowEditHandler(true);
         }}
+        onEditApplied={() => {
+          setEditApplied(true);
+        }}
+        editApplied={editApplied}
       />
 
       <AddPlanModal
@@ -397,11 +405,15 @@ const HomeScreen = () => {
         aiResponse={pendingEditResponse}
         onDismiss={() => {
           setShowEditHandler(false);
-          setPendingEditResponse(null);
         }}
         onComplete={() => {
           setShowEditHandler(false);
           setPendingEditResponse(null);
+          setEditApplied(true); // Only clear button when changes are actually applied
+          
+          // Close chatbot modal and navigate to plans page to show the updated plan
+          setChatbotVisible(false);
+          router.push('/plans?openDetails=true');
         }}
       />
     </View>
