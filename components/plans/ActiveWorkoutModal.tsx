@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { Button, Card, Checkbox, FAB, IconButton, Surface, Text, TextInput, useTheme } from 'react-native-paper';
+import { Button, Card, Checkbox, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from '../styles';
 import { Workout } from './WorkoutContext';
 
@@ -43,44 +43,51 @@ interface ActiveWorkoutModalProps {
   onClose: () => void;
   onUpdateWorkout: (workout: Workout) => void;
   onCompleteWorkout: () => void;
+  onUpdateActiveWorkout: (activeWorkout: ActiveWorkout) => void;
 }
 
 export default function ActiveWorkoutModal({
   activeWorkout,
   onClose,
   onUpdateWorkout,
-  onCompleteWorkout
+  onCompleteWorkout,
+  onUpdateActiveWorkout
 }: ActiveWorkoutModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  
-  const [currentReps, setCurrentReps] = useState('');
-  const [currentWeight, setCurrentWeight] = useState('');
-  const [currentTime, setCurrentTime] = useState('');
-  const [currentRest, setCurrentRest] = useState('');
-  const [currentNotes, setCurrentNotes] = useState('');
-  const [showStats, setShowStats] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showExerciseList, setShowExerciseList] = useState(false);
+  const [localWorkoutTime, setLocalWorkoutTime] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Timer refs
   const workoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const restTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Start workout timers
+  // Reset local timer state when workout changes (e.g., repeat workout)
   useEffect(() => {
-    if (activeWorkout?.isActive && !activeWorkout.isPaused && activeWorkout.workoutStarted) {
-      workoutTimerRef.current = setInterval(() => {
-        // Timer logic will be handled by parent component
-      }, 1000);
+    if (activeWorkout && !activeWorkout.workoutStarted) {
+      setLocalWorkoutTime(0);
+      setIsPaused(false);
     }
+  }, [activeWorkout?.workout.id, activeWorkout?.workoutStarted]);
 
+  // Auto-start timer when workout is marked as started
+  useEffect(() => {
+    if (activeWorkout?.workoutStarted && !workoutTimerRef.current) {
+      // Auto-start timer when workout is marked as started
+      startWorkoutTimer();
+    }
+  }, [activeWorkout?.workoutStarted]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
     return () => {
       if (workoutTimerRef.current) {
         clearInterval(workoutTimerRef.current);
+        workoutTimerRef.current = null;
       }
     };
-  }, [activeWorkout?.isActive, activeWorkout?.isPaused, activeWorkout?.workoutStarted]);
+  }, []);
 
   // Start rest timer
   useEffect(() => {
@@ -97,36 +104,149 @@ export default function ActiveWorkoutModal({
     };
   }, [activeWorkout?.isResting, activeWorkout?.currentRestTime]);
 
+  const clearExistingTimer = () => {
+    // Clear any existing workout timer
+    if (workoutTimerRef.current) {
+      clearInterval(workoutTimerRef.current);
+      workoutTimerRef.current = null;
+    }
+  };
+
   const startWorkoutTimer = () => {
-    // This will be handled by parent component
+    // Prevent multiple timers from running
+    if (workoutTimerRef.current) {
+      return;
+    }
+    
+    // Mark workout as started and update parent component
+    const updatedWorkout = {
+      ...activeWorkout,
+      workoutStarted: true,
+      startTime: new Date(),
+    };
+    
+    // Update parent component immediately when starting
+    onUpdateWorkout(updatedWorkout.workout);
+    
+    // Start simple timer that increments every second
+    workoutTimerRef.current = setInterval(() => {
+      setLocalWorkoutTime(prev => {
+        const newTime = prev + 1;
+        
+        // Update Firebase every 5 minutes (300 seconds)
+        if (newTime % 300 === 0) {
+          const workoutWithTime = {
+            ...activeWorkout,
+            totalWorkoutTime: newTime,
+          };
+          onUpdateWorkout(workoutWithTime.workout);
+        }
+        
+        return newTime;
+      });
+    }, 1000);
   };
 
   const pauseWorkout = () => {
-    // This will be handled by parent component
+    // Pause the workout timer
+    if (workoutTimerRef.current) {
+      clearInterval(workoutTimerRef.current);
+      workoutTimerRef.current = null;
+    }
+    
+    // Update local state immediately for UI responsiveness
+    setIsPaused(true);
+    
+    // Update parent component
+    const updatedWorkout = {
+      ...activeWorkout,
+      isPaused: true,
+    };
+    onUpdateWorkout(updatedWorkout.workout);
   };
 
   const resumeWorkout = () => {
-    // This will be handled by parent component
+    // Update local state immediately for UI responsiveness
+    setIsPaused(false);
+    
+    // Update parent component
+    const updatedWorkout = {
+      ...activeWorkout,
+      isPaused: false,
+    };
+    onUpdateWorkout(updatedWorkout.workout);
+    
+    // Resume the timer from where it left off
+    if (workoutTimerRef.current) {
+      return;
+    }
+    
+    workoutTimerRef.current = setInterval(() => {
+      setLocalWorkoutTime(prev => {
+        const newTime = prev + 1;
+        
+        // Update Firebase every 5 minutes (300 seconds)
+        if (newTime % 300 === 0) {
+          const workoutWithTime = {
+            ...activeWorkout,
+            totalWorkoutTime: newTime,
+          };
+          onUpdateWorkout(workoutWithTime.workout);
+        }
+        
+        return newTime;
+      });
+    }, 1000);
   };
 
   const startRest = (restTime: number) => {
-    // This will be handled by parent component
+    // starts rest timer
   };
 
   const skipRest = () => {
-    // This will be handled by parent component
+    // skips rest timer
   };
 
   const toggleExerciseCompleted = (exerciseIndex: number) => {
-    // This will be handled by parent component
+    // toggle button functionality to mark exercise as completed
   };
 
   const completeSet = () => {
-    // This will be handled by parent component
+    // Simple set completion - just mark as done
+    // TODO: This will be handled by parent component
+    // For now, just close the modal or show completion
+    // Checklist icon for when all exercises are marked as completed
   };
 
   const repeatWorkout = () => {
-    // This will be handled by parent component
+    // Clear existing timer and start fresh workout
+    clearExistingTimer();
+    
+    // Reset local state variables
+    setLocalWorkoutTime(0);
+    setIsPaused(false);
+    
+    // Reset workout state to fresh start
+    const resetWorkout = {
+      ...activeWorkout,
+      currentExerciseIndex: 0,
+      currentSetIndex: 0,
+      completedSets: [],
+      startTime: new Date(),
+      totalWorkoutTime: 0,
+      currentRestTime: 0,
+      isResting: false,
+      pausedTime: 0,
+      isPaused: false,
+      workoutStarted: false,
+      exercisesCompleted: new Array(activeWorkout.workout.exercises_list.length).fill(false),
+    };
+    
+    // Update parent's activeWorkout state
+    onUpdateActiveWorkout(resetWorkout);
+    
+    // Start fresh workout timer
+    startWorkoutTimer();
   };
 
   const finishWorkout = async () => {
@@ -188,30 +308,10 @@ export default function ActiveWorkoutModal({
     }
   };
 
-  const getWorkoutStats = () => {
-    if (!activeWorkout) return null;
-    
-    const totalSets = activeWorkout.completedSets.length;
-    const totalVolume = activeWorkout.completedSets.reduce((sum, set) => {
-      const weight = parseFloat(set.actualWeight || '0') || 0;
-      const reps = parseInt(set.actualReps || '0') || 0;
-      return sum + (weight * reps);
-    }, 0);
-    
-    const avgRestTime = activeWorkout.completedSets.reduce((sum, set) => {
-      return sum + (parseInt(set.actualRest || '0') || 0);
-    }, 0) / Math.max(totalSets, 1);
-    
-    const caloriesBurned = Math.round(totalVolume * 0.1 + activeWorkout.totalWorkoutTime * 0.1);
-    const exercisesCompleted = activeWorkout.exercisesCompleted.filter(Boolean).length;
-    
-    return { totalSets, totalVolume, avgRestTime, caloriesBurned, exercisesCompleted };
-  };
 
   const currentExercise = getCurrentExercise();
   const currentSet = getCurrentSet();
   const progress = getProgress();
-  const stats = getWorkoutStats();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -241,7 +341,7 @@ export default function ActiveWorkoutModal({
                 onPress={startWorkoutTimer}
                 style={styles.headerButton}
               />
-            ) : activeWorkout.isPaused ? (
+            ) : isPaused ? (
               <IconButton 
                 icon="play-circle" 
                 size={32} 
@@ -262,7 +362,24 @@ export default function ActiveWorkoutModal({
               icon="close" 
               size={32} 
               iconColor="white" 
-              onPress={onClose}
+              onPress={() => {
+                // Show warning alert before closing
+                Alert.alert(
+                  'Close Workout?',
+                  'Closing will reset your workout progress. Are you sure you want to continue?',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Close',
+                      style: 'destructive',
+                      onPress: onClose,
+                    },
+                  ]
+                );
+              }}
               style={styles.headerButton}
             />
           </View>
@@ -271,11 +388,11 @@ export default function ActiveWorkoutModal({
         {/* Modern Timer Display */}
         <View style={styles.timerContainer}>
           <Text style={styles.timerText}>
-            {formatTime(activeWorkout.totalWorkoutTime)}
+            {formatTime(localWorkoutTime)}
           </Text>
           <Text style={styles.timerLabel}>
             {!activeWorkout.workoutStarted ? 'Tap Play to Start' : 
-             activeWorkout.isPaused ? 'PAUSED' : 'Workout Time'}
+             isPaused ? 'PAUSED' : 'Workout Time'}
           </Text>
         </View>
         
@@ -322,59 +439,44 @@ export default function ActiveWorkoutModal({
       )}
 
       {/* Modern Stats Cards */}
-      {stats && (
         <View style={[styles.workoutsContainer, styles.statsContainer]}>
           <Card style={[styles.workoutCard, styles.statCard]}>
             <Card.Content style={styles.statCardContent}>
-              <Text style={[styles.primaryText, styles.statNumber]}>
-                {stats.totalSets}
-              </Text>
               <Text style={[styles.surfaceVariantText, styles.statLabel]}>
-                Sets
+                You
               </Text>
             </Card.Content>
           </Card>
           <Card style={[styles.workoutCard, styles.statCard]}>
             <Card.Content style={styles.statCardContent}>
-              <Text style={[styles.primaryText, styles.statNumber, { color: theme.colors.secondary }]}>
-                {stats.exercisesCompleted}
-              </Text>
               <Text style={[styles.surfaceVariantText, styles.statLabel]}>
-                Exercises
+                got
               </Text>
             </Card.Content>
           </Card>
           <Card style={[styles.workoutCard, styles.statCard]}>
             <Card.Content style={styles.statCardContent}>
-              <Text style={[styles.primaryText, styles.statNumber, { color: theme.colors.tertiary }]}>
-                {stats.caloriesBurned}
-              </Text>
               <Text style={[styles.surfaceVariantText, styles.statLabel]}>
-                Calories
+                this!
               </Text>
             </Card.Content>
           </Card>
         </View>
-      )}
 
       {/* Exercise Checklist - Modern Design */}
       <Surface style={[styles.workoutsContainer, styles.checklistContainer]}>
-        <View style={[styles.sectionHeader, { marginBottom: 0 }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            <IconButton icon="format-list-checks" size={24} iconColor={theme.colors.primary} />
-            <Text style={[styles.surfaceText, { fontSize: 18, flex: 1 }]}>
-              Exercise Checklist
-            </Text>
+        <View style={{ overflow: 'hidden' }}>
+          <View style={[styles.sectionHeader, { marginBottom: 0 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <IconButton icon="format-list-checks" size={24} iconColor={theme.colors.primary} />
+              <Text style={[styles.surfaceText, { fontSize: 18, flex: 1 }]}>
+                Exercise Checklist
+              </Text>
+            </View>
           </View>
-          <IconButton 
-            icon={showExerciseList ? "chevron-up" : "chevron-down"} 
-            size={24} 
-            iconColor={theme.colors.primary}
-            onPress={() => setShowExerciseList(!showExerciseList)}
-          />
-        </View>
-        
-        {showExerciseList && (
+
+          {/* Exercise Checklist */}
+          
           <View style={{ padding: 20 }}>
             {activeWorkout.workout.exercises_list.map((exercise, index) => {
               const exerciseProgress = getExerciseProgress(index);
@@ -417,24 +519,25 @@ export default function ActiveWorkoutModal({
                     <View style={{ 
                       backgroundColor: isCompleted ? theme.colors.primary : theme.colors.outline,
                       height: '100%',
-                      width: `${exerciseProgress * 100}%`,
                       borderRadius: 3,
+                      width: `${exerciseProgress * 100}%`,
                     }} />
                   </View>
                 </View>
               );
             })}
           </View>
-        )}
+        </View>
       </Surface>
 
       {/* Current Exercise - Modern Card */}
       {currentExercise && activeWorkout.workoutStarted && (
         <Surface style={[styles.workoutsContainer, styles.currentExerciseContainer]}>
-          <View style={[
-            styles.currentExerciseHeader,
-            { backgroundColor: theme.colors.primaryContainer }
-          ]}>
+          <View style={{ overflow: 'hidden' }}>
+            <View style={[
+              styles.currentExerciseHeader,
+              { backgroundColor: theme.colors.primaryContainer }
+            ]}>
             <View style={[styles.rowBetweenCenter, { marginBottom: 16 }]}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.onPrimaryText, styles.currentExerciseTitle]}>
@@ -463,162 +566,94 @@ export default function ActiveWorkoutModal({
           </View>
 
           <View style={styles.formContainer}>
-            {/* Modern Input Fields */}
+            {/* Simple Action Buttons */}
             <View style={styles.formGap}>
               <View style={styles.timeRow}>
-                <View style={[styles.formField, { flex: 1 }]}>
-                  <Text style={[styles.surfaceText, styles.formLabel]}>
-                    Reps
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    value={currentReps}
-                    onChangeText={setCurrentReps}
-                    keyboardType="numeric"
-                    placeholder={currentSet ? currentSet[0].toString() : '0'}
-                    left={<TextInput.Icon icon="numeric" />}
-                    style={styles.textInput}
-                    outlineStyle={styles.textInputStyle}
-                  />
-                </View>
-                <View style={[styles.formField, { flex: 1, marginLeft: 16 }]}>
-                  <Text style={[styles.surfaceText, styles.formLabel]}>
-                    Weight
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    value={currentWeight}
-                    onChangeText={setCurrentWeight}
-                    placeholder={currentSet ? currentSet[1] : '0'}
-                    left={<TextInput.Icon icon="weight" />}
-                    style={styles.textInput}
-                    outlineStyle={styles.textInputStyle}
-                  />
-                </View>
-              </View>
-              
-              <View style={styles.timeRow}>
-                <View style={[styles.formField, { flex: 1 }]}>
-                  <Text style={[styles.surfaceText, styles.formLabel]}>
-                    Time (sec)
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    value={currentTime}
-                    onChangeText={setCurrentTime}
-                    keyboardType="numeric"
-                    placeholder={currentSet ? currentSet[2].toString() : '0'}
-                    left={<TextInput.Icon icon="timer" />}
-                    style={styles.textInput}
-                    outlineStyle={styles.textInputStyle}
-                  />
-                </View>
-                <View style={[styles.formField, { flex: 1, marginLeft: 16 }]}>
-                  <Text style={[styles.surfaceText, styles.formLabel]}>
-                    Rest (sec)
-                  </Text>
-                  <TextInput
-                    mode="outlined"
-                    value={currentRest}
-                    onChangeText={setCurrentRest}
-                    keyboardType="numeric"
-                    placeholder={currentSet ? currentSet[3].toString() : '0'}
-                    left={<TextInput.Icon icon="pause" />}
-                    style={styles.textInput}
-                    outlineStyle={styles.textInputStyle}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formField}>
-                <Text style={[styles.surfaceText, styles.formLabel]}>
-                  Notes (optional)
-                </Text>
-                <TextInput
+                <Button
+                  mode="contained"
+                  onPress={completeSet}
+                  icon="check-circle"
+                  contentStyle={{ paddingVertical: 16 }}
+                  labelStyle={{ fontSize: 18, fontWeight: '700' }}
+                  style={[styles.submitButton, { flex: 1 }]}
+                >
+                  Complete Set
+                </Button>
+                <Button
                   mode="outlined"
-                  value={currentNotes}
-                  onChangeText={setCurrentNotes}
-                  multiline
-                  numberOfLines={3}
-                  placeholder="How did this set feel? Any adjustments needed?"
-                  left={<TextInput.Icon icon="note-text" />}
-                  style={styles.textInput}
-                  outlineStyle={styles.textInputStyle}
-                />
+                  onPress={() => {/* TODO: Open edit modal */}}
+                  icon="pencil"
+                  contentStyle={{ paddingVertical: 16 }}
+                  labelStyle={{ fontSize: 16, fontWeight: '600' }}
+                  style={[styles.secondaryButton, { flex: 1, marginLeft: 16 }]}
+                >
+                  Edit Set
+                </Button>
               </View>
             </View>
-
-            {/* Modern Complete Button */}
-            <Button
-              mode="contained"
-              onPress={completeSet}
-              style={[styles.submitButton, { marginTop: 24 }]}
-              icon="check-circle"
-              contentStyle={styles.submitButtonContent}
-              labelStyle={{ fontSize: 18, fontWeight: '700' }}
-            >
-              Complete Set
-            </Button>
+          </View>
           </View>
         </Surface>
       )}
 
       {/* Completed Sets - Modern Design */}
       {activeWorkout.completedSets.length > 0 && (
-        <Surface style={[styles.workoutsContainer, { margin: 20, elevation: 6, overflow: 'hidden' }]}>
-          <View style={[styles.sectionHeader, { marginBottom: 0 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <IconButton icon="history" size={24} iconColor={theme.colors.primary} />
-              <Text style={[styles.surfaceText, { fontSize: 18, flex: 1 }]}>
-                Completed Sets ({activeWorkout.completedSets.length})
-              </Text>
+        <Surface style={[styles.workoutsContainer, { margin: 20, elevation: 6 }]}>
+          <View style={{ overflow: 'hidden' }}>
+            <View style={[styles.sectionHeader, { marginBottom: 0 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <IconButton icon="history" size={24} iconColor={theme.colors.primary} />
+                <Text style={[styles.surfaceText, { fontSize: 18, flex: 1 }]}>
+                  Completed Sets ({activeWorkout.completedSets.length})
+                </Text>
+              </View>
+              <IconButton 
+                icon={showHistory ? "chevron-up" : "chevron-down"} 
+                size={24} 
+                iconColor={theme.colors.primary}
+                onPress={() => setShowHistory(!showHistory)}
+              />
             </View>
-            <IconButton 
-              icon={showHistory ? "chevron-up" : "chevron-down"} 
-              size={24} 
-              iconColor={theme.colors.primary}
-              onPress={() => setShowHistory(!showHistory)}
-            />
-          </View>
-          
-          {showHistory && (
-            <View style={{ padding: 20 }}>
-              {activeWorkout.completedSets.map((set, index) => (
-                <View key={index} style={[styles.exerciseRow, { marginBottom: 12 }]}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.surfaceText, { fontSize: 16 }]}>
-                        {set.exerciseName} - Set {set.setNumber}
-                      </Text>
-                      <Text style={[styles.surfaceVariantText, { fontSize: 12, marginTop: 4 }]}>
-                        {set.timestamp.toLocaleTimeString()}
-                      </Text>
-                      {set.notes && (
-                        <Text style={[styles.surfaceVariantText, { 
-                          fontSize: 12, 
-                          fontStyle: 'italic', 
-                          marginTop: 8,
-                          backgroundColor: 'rgba(0,0,0,0.05)',
-                          padding: 8,
-                          borderRadius: 24,
-                        }]}>
-                          "{set.notes}"
+            
+            {showHistory && (
+              <View style={{ padding: 20 }}>
+                {activeWorkout.completedSets.map((set, index) => (
+                  <View key={index} style={[styles.exerciseRow, { marginBottom: 12 }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.surfaceText, { fontSize: 16 }]}>
+                          {set.exerciseName} - Set {set.setNumber}
                         </Text>
-                      )}
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={[styles.surfaceText, { fontSize: 14 }]}>
-                        {set.actualReps} reps • {set.actualWeight}
-                      </Text>
-                      <Text style={[styles.surfaceVariantText, { fontSize: 12 }]}>
-                        {set.actualTime}s • {set.actualRest}s rest
-                      </Text>
+                        <Text style={[styles.surfaceVariantText, { fontSize: 12, marginTop: 4 }]}>
+                          {set.timestamp.toLocaleTimeString()}
+                        </Text>
+                        {set.notes && (
+                          <Text style={[styles.surfaceVariantText, { 
+                            fontSize: 12, 
+                            fontStyle: 'italic', 
+                            marginTop: 8,
+                            backgroundColor: 'rgba(0,0,0,0.05)',
+                            padding: 8,
+                            borderRadius: 24,
+                          }]}>
+                            "{set.notes}"
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.surfaceText, { fontSize: 14 }]}>
+                          {set.actualReps} reps • {set.actualWeight}
+                        </Text>
+                        <Text style={[styles.surfaceVariantText, { fontSize: 12 }]}>
+                          {set.actualTime}s • {set.actualRest}s rest
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
+                ))}
+              </View>
+            )}
+          </View>
         </Surface>
       )}
 
@@ -636,7 +671,16 @@ export default function ActiveWorkoutModal({
         </Button>
         <Button
           mode="outlined"
-          onPress={onClose}
+          onPress={() => {
+            // Capture the final workout duration and completion data
+            const completedWorkout = {
+              ...activeWorkout.workout,
+              completed: true,
+              duration: formatTime(localWorkoutTime), // Update duration with actual workout time
+            };
+            onUpdateWorkout(completedWorkout);
+            onClose();
+          }}
           icon="stop"
           contentStyle={{ paddingVertical: 16 }}
           labelStyle={{ fontSize: 16, fontWeight: '600' }}
@@ -648,15 +692,7 @@ export default function ActiveWorkoutModal({
 
       </ScrollView>
 
-      {/* Modern FAB */}
-      <FAB
-        icon="plus"
-        style={[
-          styles.fabStyle,
-          { backgroundColor: theme.colors.primary }
-        ]}
-        onPress={() => setShowExerciseList(!showExerciseList)}
-      />
+
     </View>
   );
 }

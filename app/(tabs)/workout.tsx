@@ -45,7 +45,30 @@ export default function WorkoutPage() {
       isResting: false,
       pausedTime: 0,
       isPaused: false,
-      workoutStarted: false,
+      workoutStarted: true, // This will auto-start the timer in the modal
+      exercisesCompleted: new Array(workout.exercises_list.length).fill(false),
+    });
+  };
+
+  const repeatWorkout = (workout: Workout) => {
+    // Mark workout as not completed when repeating
+    const updatedWorkout = { ...workout, completed: false };
+    updateWorkout(workout.id, { completed: false });
+    
+    // Reset workout state and start fresh with timer already started
+    setActiveWorkout({
+      workout: updatedWorkout,
+      currentExerciseIndex: 0,
+      currentSetIndex: 0,
+      completedSets: [],
+      startTime: new Date(),
+      isActive: true,
+      totalWorkoutTime: 0,
+      currentRestTime: 0,
+      isResting: false,
+      pausedTime: 0,
+      isPaused: false,
+      workoutStarted: true, // This will auto-start the timer in the modal
       exercisesCompleted: new Array(workout.exercises_list.length).fill(false),
     });
   };
@@ -55,10 +78,17 @@ export default function WorkoutPage() {
       <ActiveWorkoutModal
         activeWorkout={activeWorkout}
         onClose={() => setActiveWorkout(null)}
-        onUpdateWorkout={(workout) => updateWorkout(workout.id, { completed: true })}
+        onUpdateWorkout={(workout) => {
+          // Update workout with all changes (completed status, duration, etc.)
+          updateWorkout(workout.id, workout);
+        }}
         onCompleteWorkout={() => {
           setActiveWorkout(null);
           // Refresh the workout list
+        }}
+        onUpdateActiveWorkout={(updatedActiveWorkout) => {
+          // Update the activeWorkout state when modal needs to reset it
+          setActiveWorkout(updatedActiveWorkout);
         }}
       />
     );
@@ -111,7 +141,7 @@ export default function WorkoutPage() {
           ) : (
             <View style={{ gap: 16 }}>
               {todaysWorkouts.map((workout: Workout) => (
-                <Card key={workout.id} style={[styles.workoutCard, { elevation: 8, overflow: 'hidden' }]}> 
+                <Card key={workout.id} style={[styles.workoutCard, { elevation: 8}]}> 
                   <Card.Content style={styles.cardContentLg}>
                     <View style={[styles.rowBetweenStart, { marginBottom: 16 }]}>
                       <View style={{ flex: 1 }}>
@@ -142,7 +172,7 @@ export default function WorkoutPage() {
                     
                     <Button
                       mode={workout.completed ? "outlined" : "contained"}
-                      onPress={() => startWorkout(workout)}
+                      onPress={() => workout.completed ? repeatWorkout(workout) : startWorkout(workout)}
                       icon={workout.completed ? "replay" : "play"}
                       contentStyle={{ paddingVertical: 12 }}
                       labelStyle={{ fontSize: 16, fontWeight: '600' }}
@@ -167,7 +197,7 @@ export default function WorkoutPage() {
             </Text>
             <View style={{ gap: 16 }}>
               {upcomingWorkouts.map((workout) => (
-                <Card key={workout.id} style={[styles.workoutCard, { elevation: 4, overflow: 'hidden' }]}>
+                <Card key={workout.id} style={[styles.workoutCard, { elevation: 4 }]}>
                   <Card.Content style={styles.cardContentMd}>
                     <View style={[styles.rowBetweenStart, { marginBottom: 24 }]}>
                       <View style={{ flex: 1 }}>
@@ -225,31 +255,3 @@ export default function WorkoutPage() {
     </View>
   );
 }
-=======
-import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-
-const app = () => {
-  return (
-    <View style={styles.container}>
-      <Text style= {styles.text}>Workout Page</Text>
-    </View>
-  )
-}
-
-export default app
-
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-    },
-    text: {
-      color: 'black',
-      fontSize: 30,
-      fontWeight: 'bold',
-      textAlign: 'center',
-      marginTop: 100,
-    },
-  });

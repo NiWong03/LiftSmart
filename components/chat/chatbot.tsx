@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import React, { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
-import { useWorkout, WorkoutPlan, Workout } from '../plans/WorkoutContext';
+import { useWorkout } from '../plans/WorkoutContext';
 
 const openai = new OpenAI({
     apiKey: API_KEY,
@@ -63,13 +63,36 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
     setInputText('');
     setIsLoading(true);
 
-    try { 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-                { 
-                    role: "system", 
-                    content: `Produce a workout plan in two parts: a concise, human-readable response string stating describing the workout plan for the user , followed by the WorkoutPlan payload in JSON format (silently, without prose). The summary should provide a clear overview of the plan purpose, total duration in weeks, total number of workouts, difficulty, and the user’s goal.
+    try {
+
+        // Determine if this is an edit request by checking for edit-related keywords
+        const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
+        const addKeywords = ['add to', 'add more', 'add another'];
+        
+        // Check for edit keywords
+        const hasEditKeyword = editKeywords.some(keyword => 
+            inputText.toLowerCase().includes(keyword)
+        );
+        
+        // Check for add keywords that modify existing plan
+        const hasAddKeyword = addKeywords.some(keyword => 
+            inputText.toLowerCase().includes(keyword)
+        );
+        
+        // Check if user is referring to current plan
+        const refersToCurrentPlan = inputText.toLowerCase().includes('my plan') || 
+                                   inputText.toLowerCase().includes('current plan') ||
+                                   inputText.toLowerCase().includes('this plan') ||
+                                   inputText.toLowerCase().includes('the plan');
+        
+        const isEditRequest = (hasEditKeyword || hasAddKeyword || refersToCurrentPlan) && currentPlan.name;
+
+        let systemPrompt = '';
+        
+        if (isEditRequest && currentPlan.name) {
+          // For edits, include current plan data
+          const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
+          systemPrompt = `Produce a workout plan in two parts: a concise, human-readable response string stating describing the workout plan for the user , followed by the WorkoutPlan payload in JSON format (silently, without prose). The summary should provide a clear overview of the plan purpose, total duration in weeks, total number of workouts, difficulty, and the user's goal.
                             Rules:
                             - Output must be a JSON object with two fields:
                                 - "response": (string) A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
@@ -140,125 +163,105 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onDismiss, 
                             - The summary string must be immediately understandable to the user and must not contain technical JSON-specific terms or field names.
 
                             # Reminder
-                            Your main objective is to provide a “summary” string alongside the required WorkoutPlan JSON in a single top-level JSON object response, following all structure, formatting, and field restrictions above.`
-                  },
-              { role: "user", content: inputText.trim() }
-    // Determine if this is an edit request by checking for edit-related keywords
-    // Specific keywords to avoid false positives
-    const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
-    const addKeywords = ['add to', 'add more', 'add another'];
-    
-    // Check for edit keywords
-    const hasEditKeyword = editKeywords.some(keyword => 
-      inputText.toLowerCase().includes(keyword)
-    );
-    
-    // Check for add keywords that modify existing plan
-    const hasAddKeyword = addKeywords.some(keyword => 
-      inputText.toLowerCase().includes(keyword)
-    );
-    
-    // Check if user is referring to current plan
-    const refersToCurrentPlan = inputText.toLowerCase().includes('my plan') || 
-                               inputText.toLowerCase().includes('current plan') ||
-                               inputText.toLowerCase().includes('this plan') ||
-                               inputText.toLowerCase().includes('the plan');
-    
-    const isEditRequest = (hasEditKeyword || hasAddKeyword || refersToCurrentPlan) && currentPlan.name;
+                            Your main objective is to provide a "summary" string alongside the required WorkoutPlan JSON in a single top-level JSON object response, following all structure, formatting, and field restrictions above.
 
-    try { 
-        let systemPrompt = '';
-        
-        if (isEditRequest && currentPlan.name) {
-          // For edits, include current plan data
-          const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
-          systemPrompt = `You are an AI fitness coach editing an existing workout plan.
-
-RESPONSE FORMAT:
-Return JSON with:
-- "action": "edit"
-- "response": A clear summary of what you're changing
-- "plan": The complete updated plan object (replace the entire plan)
-
-CURRENT PLAN TO EDIT:
-${JSON.stringify({
-  name: currentPlan.name,
-  goal: currentPlan.goal,
-  duration: currentPlan.duration,
-  difficulty: currentPlan.difficulty,
-  emoji: currentPlan.emoji,
-  workouts: currentPlanWorkouts.map(w => ({
-    id: w.id,
-    name: w.name,
-    day: w.day,
-    date: w.date,
-    startTime: w.startTime,
-    endTime: w.endTime,
-    difficulty: w.difficulty,
-    exercises_list: w.exercises_list
-  }))
-})}
-
-RULES:
-- Return the complete updated plan, not just changes
-- Preserve existing workout IDs
-- Valid JSON only, no markdown
-- Dates: "YYYY-MM-DD" format
-- Time: "h:mm AM/PM" format
-- Sets: arrays in format [reps:number, weight:string, time:number, rest:number]
-- Difficulty: ""`;
+                            CURRENT PLAN TO EDIT:
+                            ${JSON.stringify({
+                              name: currentPlan.name,
+                              goal: currentPlan.goal,
+                              duration: currentPlan.duration,
+                              difficulty: currentPlan.difficulty,
+                              emoji: currentPlan.emoji,
+                              workouts: currentPlanWorkouts.map(w => ({
+                                id: w.id,
+                                name: w.name,
+                                day: w.day,
+                                date: w.date,
+                                startTime: w.startTime,
+                                endTime: w.endTime,
+                                difficulty: w.difficulty,
+                                exercises_list: w.exercises_list
+                              }))
+                            })}`;
         } else {
           // For new plans, use the original create prompt
-          systemPrompt = `Produce a workout plan in JSON with two fields:
-- "response": A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
-- "plan": object matching the schema below.
+          systemPrompt = `Produce a workout plan in two parts: a concise, human-readable response string stating describing the workout plan for the user , followed by the WorkoutPlan payload in JSON format (silently, without prose). The summary should provide a clear overview of the plan purpose, total duration in weeks, total number of workouts, difficulty, and the user's goal.
+                            Rules:
+                            - Output must be a JSON object with two fields:
+                                - "response": (string) A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
+                                - "plan": (object) The WorkoutPlan payload as specified by the schema in the prompt below.
+                            - Do not include any other text, prose, explanations, or formatting.
+                            - Use only the fields provided in the schemas.
+                            - Continue to follow all the schema and formatting instructions for the WorkoutPlan, Workout, Exercise, and Set objects from the original prompt.
+                            - For all dates, use the format:("YYYY-MM-DD").
+                            - For sets, use arrays with the precise required order and types: [reps, weight, time, rest].
+                            - Do not include id, userId, or any other extraneous fields.
 
-Rules:
-- Valid JSON only.
-- No extra fields (omit id, userId).
-- Dates: "YYYY-MM-DD". //set dates relative to today's date
-- Time: "h:mm AM/PM".
-- workoutsCompleted = 0; totalWorkouts = workouts.length.
-- Sets: arrays in format [reps:number, weight:string, time:number, rest:number].
-- Difficulty: "".
-- Do not wrap response in backticks or markdown code blocks.
+                            # Output Format
 
-Current date: ${new Date().toISOString().split('T')[0]}
+                            Respond with a single JSON object with the following keys:
+                            - "response": string, a user-facing, high-level description of the plan and confirmation that the correct plan is being created for the user.
+                            - "plan": follow the schema defined below
+                            type Set = [reps: number, weight: string, time: number, rest: number];
 
-Schemas:
-type Set = [reps:number, weight:string, time:number, rest:number];
+                            interface Exercise {
+                            name: string;
+                            sets: fixed-length arrays with exactly 4 items in this order → [reps:number, weight:string, time:number, rest:number]; e.g., [[10, "45 lb", 0, 90], [8, "50 lb", 0, 120]]
+                            description?: string;
+                            }
 
-interface Exercise {
-  name: string;
-  sets: Set[];
-  description?: string;
-}
+                            interface Workout {
+                            // id and userId are assigned by the app; omit them
+                            day: string;                       // e.g., "Monday"
+                            date: ("YYYY-MM-DD");              // e.g., "2025-08-20"
+                            name: string;                      // e.g., "Push Day"
+                            duration: string;                  // e.g., "45 min"
+                            startTime: string;                 // e.g., "8:30 AM"
+                            endTime: string;                   // e.g., "9:15 AM"
+                            exercises: number;                 // must equal exercises_list.length
+                            completed: boolean;                // always false on creation
+                            difficulty: "Easy" | "Medium" | "Hard";
+                            exercises_list: Exercise[];
+                            }
 
-interface Workout {
-  day: string;
-  date: string;
-  name: string;
-  duration: string;
-  startTime: string;
-  endTime: string;
-  exercises: number;         // = exercises_list.length
-  difficulty: "Easy" | "Medium" | "Hard";
-  exercises_list: Exercise[];
-}
+                            interface WorkoutPlan {
+                            name: string;
+                            duration: number;                  // in weeks
+                            progress: string;                  // e.g., "0%"
+                            goal: string;
+                            workoutsCompleted: number;         // 0 on creation
+                            totalWorkouts: number;             // workouts.length
+                            difficulty: "Easy" | "Medium" | "Hard";
+                            emoji: string;                     // e.g., "💪"
+                            workouts: Workout[];               // optional; include to pre-create workouts
+                            }
 
-interface WorkoutPlan {
-  name: string;
-  duration: number;          // weeks
-  goal: string;
-  workoutsCompleted: number; // 0
-  totalWorkouts: number;     // workouts.length
-  difficulty: "";
-  emoji: string;
-  workouts: Workout[];
-}`;
+                            Rules:
+                            - Output valid JSON only.
+                            - Do not include fields not listed above.
+                            - For time, use "h:mm AM/PM".
+                            - For sets, use arrays like [10, "45 lb", 0, 90].
+                            - Set workoutsCompleted = 0 and totalWorkouts = workouts.length.
+
+                            Example:
+                            {
+                            "summary": "The 'Beginner Strength' plan is a 4-week program designed to help you build muscle with 12 total workouts at a Medium difficulty.",
+                            "plan": {
+                                ...WorkoutPlan object (per schema)...
+                            }
+                            }
+
+                            # Notes
+                            - The summary may include placeholders such as [plan goal], [number of weeks], [total workouts], and [difficulty] as needed.
+                            - The summary string must be immediately understandable to the user and must not contain technical JSON-specific terms or field names.
+
+                            # Reminder
+                            Your main objective is to provide a "summary" string alongside the required WorkoutPlan JSON in a single top-level JSON object response, following all structure, formatting, and field restrictions above.
+
+                            Current date: ${new Date().toISOString().split('T')[0]}`;
         }
 
-        const response = await openai.chat.completions.create({
+        const response2 = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
                 { 
@@ -268,10 +271,10 @@ interface WorkoutPlan {
                 { role: "user", content: inputText.trim() }
             ],
         });
-        console.log("AI Response:", response.choices[0].message.content);
+        console.log("AI Response:", response2.choices[0].message.content);
 
         try {
-                const responseContent = response.choices[0].message.content;
+                const responseContent = response2.choices[0].message.content;
                 if (!responseContent) return;
                 const parsedResponse = JSON.parse(responseContent); 
                 
@@ -300,18 +303,17 @@ interface WorkoutPlan {
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.',
+                content: response2.choices[0].message.content || 'Sorry, I couldn\'t generate a response.',
                 timestamp: new Date(),
             };
             setMessages(prev => [...prev, aiMessage]);
             console.log(parseError);
         }
+    } catch (error) {
+        console.error("OpenAI Error:", error);
+    } finally {
+        setIsLoading(false);
     }
-    catch (error) {
-    console.error("OpenAI Error:", error);
-} finally {
-    setIsLoading(false);
-}
   };
 
   return (

@@ -101,7 +101,7 @@ const HomeScreen = () => {
 
           {/* Quick Stats */}
           <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={styles.statsRow}>
+            <View style={styles.workoutDetails}>
               <View style={styles.statItem}>
                 <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
                   7
@@ -436,71 +436,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: '#E5E7EB',
-  },
-  cardContainer: {
-    marginBottom: 20,
-    borderRadius: 12,
-  },
-  cardContent: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: 'transparent',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  workoutDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailItem: {
-    alignItems: 'center',
-  },
-  cardActions: {
-    paddingTop: 8,
-    gap: 12,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    width: '100%',
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    width: '100%',
-  },
-  buttonContent: {
-    paddingVertical: 4,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   statItem: {
     alignItems: 'center',

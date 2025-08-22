@@ -221,7 +221,6 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   checklistContainer: {
     margin: 20,
     elevation: 8,
-    overflow: 'hidden',
   },
   exerciseChecklistItem: {
     marginBottom: 20,
@@ -245,7 +244,6 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   currentExerciseContainer: {
     margin: 20,
     elevation: 10,
-    overflow: 'hidden',
   },
   currentExerciseHeader: {
     padding: 24,
@@ -394,7 +392,6 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   workoutCard: {
     marginBottom: 12,
     borderRadius: 12,
-    overflow: 'hidden',
     backgroundColor: theme.colors.surface,
   },
   workoutHeader: {
