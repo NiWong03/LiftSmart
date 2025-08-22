@@ -44,6 +44,9 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   const [hasDraftPlan, setHasDraftPlan] = useState(false);
   const [hasEditSuggestions, setHasEditSuggestions] = useState(false);
   const [storedEditResponse, setStoredEditResponse] = useState<any>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingMessage, setTypingMessage] = useState('');
+  const [fullTypingMessage, setFullTypingMessage] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Add keyboard listeners
@@ -87,6 +90,34 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
       setStoredEditResponse(null);
     }
   }, [editApplied]);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (isTyping && fullTypingMessage) {
+      let currentIndex = 0;
+      const interval = setInterval(() => {
+        if (currentIndex <= fullTypingMessage.length) {
+          setTypingMessage(fullTypingMessage.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+          setIsTyping(false);
+          setTypingMessage('');
+          // Add the complete message to chat
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: fullTypingMessage,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMessage]);
+          setFullTypingMessage('');
+        }
+      }, 10); // Adjust speed here (lower = faster)
+
+      return () => clearInterval(interval);
+    }
+  }, [isTyping, fullTypingMessage]);
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -284,53 +315,39 @@ interface WorkoutPlan {
                 const responseContent = response.choices[0].message.content;
                 if (!responseContent) return;
                 
-                // Handle different response types
-                if (isAdviceRequest) {
-                  // For advice requests, use the raw response directly
-                  const aiMessage: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: 'assistant',
-                    content: responseContent,
-                    timestamp: new Date(),
-                  };
-                  setMessages(prev => [...prev, aiMessage]);
-                } else {
-                  // For plan creation/editing, parse JSON
-                  const parsedResponse = JSON.parse(responseContent); 
-                  
-                  // Handle different action types
-                  if (parsedResponse.action === 'edit') {
-                    // Set the new edit suggestions
-                    setHasEditSuggestions(true);
-                    setHasDraftPlan(false);
-                    setStoredEditResponse(parsedResponse);
-                  } else {
-                    // Create new plan (default behavior)
-                    onParsedResponse?.(parsedResponse);
-                    setHasDraftPlan(true);
-                    setHasEditSuggestions(false);
-                  }
-                  
-                  console.log('response parsed!')           
-                  const aiMessage: Message = {
-                  id: (Date.now() + 1).toString(),
-                  role: 'assistant',
-                  content: parsedResponse.response || 'Sorry, I couldn\'t generate a response.',
-                  timestamp: new Date(),
-              };
-              setMessages(prev => [...prev, aiMessage]);
-                }
-        } catch (parseError) {
-            // If not JSON, use the raw response
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.',
-                timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, aiMessage]);
-            console.log(parseError);
-        }
+                                 // Handle different response types
+                 if (isAdviceRequest) {
+                   // For advice requests, start typing animation
+                   setIsTyping(true);
+                   setFullTypingMessage(responseContent);
+                 } else {
+                   // For plan creation/editing, parse JSON
+                   const parsedResponse = JSON.parse(responseContent); 
+                   
+                   // Handle different action types
+                   if (parsedResponse.action === 'edit') {
+                     // Set the new edit suggestions
+                     setHasEditSuggestions(true);
+                     setHasDraftPlan(false);
+                     setStoredEditResponse(parsedResponse);
+                   } else {
+                     // Create new plan (default behavior)
+                     onParsedResponse?.(parsedResponse);
+                     setHasDraftPlan(true);
+                     setHasEditSuggestions(false);
+                   }
+                   
+                   console.log('response parsed!')           
+                   // Start typing animation for the response
+                   setIsTyping(true);
+                   setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
+                 }
+                 } catch (parseError) {
+             // If not JSON, use the raw response with typing animation
+             setIsTyping(true);
+             setFullTypingMessage(response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.');
+             console.log(parseError);
+         }
     }
     catch (error) {
     console.error("OpenAI Error:", error);
@@ -435,19 +452,34 @@ interface WorkoutPlan {
               </View>
               ))}
               
-              {/* Loading Indicator */}
-              {isLoading && (
-                <View style={[styles.messageContainer, styles.assistantMessage]}>
-                  <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color={theme.colors.primary} />
-                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8 }}>
-                        Thinking...
-                      </Text>
-                    </View>
-                  </Surface>
-                </View>
-              )}
+                             {/* Loading Indicator */}
+               {isLoading && (
+                 <View style={[styles.messageContainer, styles.assistantMessage]}>
+                   <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
+                     <View style={styles.loadingContainer}>
+                       <ActivityIndicator size="small" color={theme.colors.primary} />
+                       <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 8 }}>
+                         Thinking...
+                       </Text>
+                     </View>
+                   </Surface>
+                 </View>
+               )}
+
+               {/* Typing Indicator */}
+               {isTyping && (
+                 <View style={[styles.messageContainer, styles.assistantMessage]}>
+                   <Surface style={[styles.messageBubble, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
+                     <Text
+                       variant="bodyMedium"
+                       style={{ color: theme.colors.onSurfaceVariant }}
+                     >
+                       {typingMessage}
+                       <Text style={{ color: theme.colors.primary }}>|</Text>
+                     </Text>
+                   </Surface>
+                 </View>
+               )}
               
               {hasDraftPlan && (
                 <View style={[styles.messageContainer, styles.assistantMessage]}>
