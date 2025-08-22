@@ -23,6 +23,18 @@ const HomeScreen = () => {
   const authUserId = FIREBASE_AUTH.currentUser?.uid ?? '';
   const [user, setUser] = useState<User | null>(null);
 
+  const realTimeGreeting = () => {
+    const currentHour = new Date().getHours();
+    
+    if (currentHour >= 4 && currentHour < 12) {
+      return 'Good Morning';
+    } else if (currentHour >= 12 && currentHour < 17) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  };
+
   const [draftPlan, setDraftPlan] = useState({
     name: '',
     goal: '',
@@ -98,7 +110,7 @@ const HomeScreen = () => {
           {/* Header Section */}
           <View style={styles.header}>
             <Text variant="displaySmall" style={[styles.greeting, { color: theme.colors.onBackground }]}>
-              Good morning,
+              {realTimeGreeting()},
             </Text>
             <Text variant="headlineMedium" style={[styles.name, { color: theme.colors.primary }]}>
             {user?.email || 'Guest'} 
