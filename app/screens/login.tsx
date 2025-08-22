@@ -1,7 +1,7 @@
 import { createPlanStyles } from '@/components/plans/styles';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, View, } from 'react-native';
 import { ActivityIndicator, Avatar, Button, Surface, Text, TextInput, useTheme } from 'react-native-paper';
@@ -39,7 +39,7 @@ const Login = () => {
         console.log(response);
     } catch (error) {
         console.log(error);
-        alert('No log in for u ');
+        alert('No log in for u\n Incorrect email or password');
     } finally {
         setLoading(false);
     }
@@ -53,12 +53,25 @@ const Login = () => {
         alert('user created');
     } catch (error) {
         console.log(error);
-        alert('No sign up for u');
+        alert('No sign up for u:\n ' + error);
         
     } finally {
         setLoading(false);
     }
   };
+
+  const handleResetPassword = async () => {
+    setLoading(true);
+    try{
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent');
+    } catch (error) {
+        console.log(error);
+        alert('No reset password for u\n ' + error);
+    } finally {
+        setLoading(false);
+    }
+  }
 
   // Show loading while checking auth state
   if (authLoading) {
@@ -137,7 +150,16 @@ const Login = () => {
                     >
                     Sign Up
                     </Button>
+
+                    <Button
+                    mode="outlined"
+                    onPress={handleResetPassword}
+                    style={[styles.secondaryButton, { marginTop: 12,  }]}
+                    >
+                    Reset Password
+                    </Button>
                     </>
+                    
                 )}
             </Surface>
             </View>
