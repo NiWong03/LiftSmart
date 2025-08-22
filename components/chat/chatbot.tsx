@@ -230,7 +230,7 @@ Rules:
 - Time: "h:mm AM/PM".
 - workoutsCompleted = 0; totalWorkouts = workouts.length.
 - Sets: arrays in format [reps:number, weight:string, time:number, rest:number].
-- Difficulty: "Easy" | "Medium" | "Hard".
+- Difficulty: "".
 - Do not wrap response in backticks or markdown code blocks.
 
 Current date: ${new Date().toISOString().split('T')[0]}
@@ -262,7 +262,7 @@ interface WorkoutPlan {
   goal: string;
   workoutsCompleted: number; // 0
   totalWorkouts: number;     // workouts.length
-  difficulty: "Easy" | "Medium" | "Hard";
+  difficulty: "";
   emoji: string;
   workouts: Workout[];
 }`;
