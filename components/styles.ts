@@ -321,6 +321,16 @@ export const createPlanStyles = (theme: any) => StyleSheet.create({
   secondaryButton: {
     borderRadius: 12,
   },
+  setCompletionButton: {
+    borderRadius: 20,
+    minWidth: 110,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    height: 40,
+    flexShrink: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emojiContainer: {
     width: 60,
     height: 60,

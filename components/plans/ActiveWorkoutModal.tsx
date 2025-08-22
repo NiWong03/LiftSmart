@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { Button, Card, Checkbox, IconButton, Surface, Text, useTheme } from 'react-native-paper';
+import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from '../styles';
-import { Workout } from './WorkoutContext';
+import { Set, Workout } from './WorkoutContext';
 
 export interface ActiveSet {
   exerciseName: string;
@@ -93,16 +93,50 @@ export default function ActiveWorkoutModal({
   useEffect(() => {
     if (activeWorkout?.isResting && activeWorkout.currentRestTime > 0) {
       restTimerRef.current = setInterval(() => {
-        // Rest timer logic will be handled by parent component
+        // Decrease rest time by 1 second
+        const newRestTime = activeWorkout.currentRestTime - 1;
+        
+        if (newRestTime <= 0) {
+          // Rest time is complete
+          clearInterval(restTimerRef.current!);
+          restTimerRef.current = null;
+          
+          const updatedActiveWorkout = {
+            ...activeWorkout,
+            isResting: false,
+            currentRestTime: 0,
+          };
+          onUpdateActiveWorkout(updatedActiveWorkout);
+        } else {
+          // Update rest time
+          const updatedActiveWorkout = {
+            ...activeWorkout,
+            currentRestTime: newRestTime,
+          };
+          onUpdateActiveWorkout(updatedActiveWorkout);
+        }
       }, 1000);
     }
 
     return () => {
       if (restTimerRef.current) {
         clearInterval(restTimerRef.current);
+        restTimerRef.current = null;
       }
     };
   }, [activeWorkout?.isResting, activeWorkout?.currentRestTime]);
+
+  const parseSet = (set: Set, setIndex: number) => {
+    const rest = set[3]?.toString() || '';
+    
+    return {
+      setNumber: setIndex + 1,
+      reps: set[0]?.toString() || '',
+      weight: set[1]?.toString() || '',
+      time: set[2]?.toString() || '',
+      rest: rest === '0' ? '60' : rest,
+    };
+  };
 
   const clearExistingTimer = () => {
     // Clear any existing workout timer
@@ -199,86 +233,82 @@ export default function ActiveWorkoutModal({
     }, 1000);
   };
 
-  const startRest = (restTime: number) => {
-    // starts rest timer
-  };
+
 
   const skipRest = () => {
-    // skips rest timer
-  };
-
-  const toggleExerciseCompleted = (exerciseIndex: number) => {
-    // toggle button functionality to mark exercise as completed
-  };
-
-  const completeSet = () => {
-    // Simple set completion - just mark as done
-    // TODO: This will be handled by parent component
-    // For now, just close the modal or show completion
-    // Checklist icon for when all exercises are marked as completed
-  };
-
-  const completeSetForExercise = (exerciseIndex: number) => {
-    const exercise = activeWorkout.workout.exercises_list[exerciseIndex];
-    if (!exercise) return;
-    
-    // Create completed set record
-    const completedSet: ActiveSet = {
-      exerciseName: exercise.name,
-      setNumber: 1, // For now, just mark exercise as complete
-      reps: '0',
-      weight: '0',
-      time: '0',
-      rest: '0',
-      completed: true,
-      timestamp: new Date(),
-    };
-    
-    // Add to completed sets
-    const updatedCompletedSets = [...activeWorkout.completedSets, completedSet];
-    
-    // Mark exercise as completed
-    const updatedExercisesCompleted = [...activeWorkout.exercisesCompleted];
-    updatedExercisesCompleted[exerciseIndex] = true;
-    
-    // Update active workout state
+    // Skip rest timer and continue to next set
     const updatedActiveWorkout = {
       ...activeWorkout,
-      completedSets: updatedCompletedSets,
-      exercisesCompleted: updatedExercisesCompleted,
+      isResting: false,
+      currentRestTime: 0,
     };
-    
-    // Update parent's activeWorkout state
     onUpdateActiveWorkout(updatedActiveWorkout);
-    
-    // Check if all exercises are completed
-    const allCompleted = updatedExercisesCompleted.every(completed => completed);
-    if (allCompleted) {
-      Alert.alert(
-        'Workout Complete! 🎉',
-        'Congratulations! You have completed all exercises in this workout.',
-        [
-          {
-            text: 'Finish Workout',
-            onPress: () => finishWorkout(),
-          },
-        ]
-      );
-    }
   };
 
-  const toggleExerciseCompletion = (exerciseIndex: number) => {
-    // Toggle completion status
-    const updatedExercisesCompleted = [...activeWorkout.exercisesCompleted];
-    updatedExercisesCompleted[exerciseIndex] = !updatedExercisesCompleted[exerciseIndex];
+  const toggleSetCompletion = (exerciseName: string, setNumber: number) => {
+    const existingSetIndex = activeWorkout.completedSets.findIndex(
+      set => set.exerciseName === exerciseName && set.setNumber === setNumber
+    );
     
-    // Update active workout state with only the completed field
-    const updatedActiveWorkout = {
-      ...activeWorkout,
-      exercisesCompleted: updatedExercisesCompleted,
-    };
+    let updatedCompletedSets;
+    let shouldStartRest = false;
+    let restTime = 0;
     
-    // Update parent's activeWorkout state
+    if (existingSetIndex >= 0) {
+      // Remove the set if it's already completed
+      updatedCompletedSets = activeWorkout.completedSets.filter(
+        (_, index) => index !== existingSetIndex
+      );
+    } else {
+      // Add the set as completed
+      const newCompletedSet: ActiveSet = {
+        exerciseName,
+        setNumber,
+        reps: '',
+        weight: '',
+        time: '',
+        rest: '',
+        completed: true,
+        timestamp: new Date(),
+      };
+      updatedCompletedSets = [...activeWorkout.completedSets, newCompletedSet];
+      
+      // Check if we should start rest timer
+      const exercise = activeWorkout.workout.exercises_list.find(ex => ex.name === exerciseName);
+      console.log('Exercise found:', exercise?.name);
+      if (exercise && exercise.sets[setNumber - 1]) {
+        const set = exercise.sets[setNumber - 1];
+        console.log('Set found:', set);
+        const rawRestValue = set[3]; // rest time is at index 3
+        console.log('Raw rest value:', rawRestValue);
+        
+        // Use the same logic as parseSet for rest time
+        const restValue = rawRestValue === 0 ? 60 : rawRestValue;
+        console.log('Parsed rest value:', restValue);
+        
+        if (restValue > 0) {
+          shouldStartRest = true;
+          restTime = restValue;
+          console.log('Starting rest timer with:', restTime);
+        }
+      }
+    }
+    
+    // Create the updated workout state
+    let updatedActiveWorkout = { ...activeWorkout, completedSets: updatedCompletedSets };
+    
+    // If we should start rest, include rest timer state in the same update
+    if (shouldStartRest && restTime > 0) {
+      updatedActiveWorkout = {
+        ...updatedActiveWorkout,
+        isResting: true,
+        currentRestTime: restTime,
+      };
+      console.log('Updated workout with rest timer:', updatedActiveWorkout.isResting, updatedActiveWorkout.currentRestTime);
+    }
+    
+    // Single update call with all changes
+    console.log('Final workout update:', updatedActiveWorkout);
     onUpdateActiveWorkout(updatedActiveWorkout);
   };
 
@@ -337,18 +367,26 @@ export default function ActiveWorkoutModal({
   const getProgress = () => {
     if (!activeWorkout) return 0;
     
-    // Count completed exercises
-    const completedExercises = activeWorkout.exercisesCompleted.filter(completed => completed).length;
-    const totalExercises = activeWorkout.workout.exercises_list.length;
-    
-    return totalExercises > 0 ? completedExercises / totalExercises : 0;
+    // Count completed sets
+    const completedSets = activeWorkout.completedSets.length;
+    const totalSets = activeWorkout.workout.exercises_list.reduce((total, exercise) => total + exercise.sets.length, 0);
+    return totalSets > 0 ? completedSets / totalSets : 0;
   };
 
   const getExerciseProgress = (exerciseIndex: number) => {
     if (!activeWorkout) return 0;
     
-    // Simply return 1 (100%) if exercise is completed, 0 (0%) if not
-    return activeWorkout.exercisesCompleted[exerciseIndex] ? 1 : 0;
+    const exercise = activeWorkout.workout.exercises_list[exerciseIndex];
+    if (!exercise) return 0;
+    
+    // Count completed sets for this exercise
+    const completedSets = activeWorkout.completedSets.filter(
+      set => set.exerciseName === exercise.name
+    ).length;
+    
+    const totalSets = exercise.sets.length;
+    
+    return totalSets > 0 ? completedSets / totalSets : 0;
   };
 
   const formatTime = (seconds: number): string => {
@@ -542,12 +580,6 @@ export default function ActiveWorkoutModal({
               return (
                 <View key={index} style={styles.exerciseChecklistItem}>
                   <View style={styles.exerciseChecklistRow}>
-                    <Checkbox
-                      status={isCompleted ? 'checked' : 'unchecked'}
-                      onPress={() => toggleExerciseCompleted(index)}
-                      disabled={!activeWorkout.workoutStarted}
-                      color={theme.colors.primary}
-                    />
                     <View style={styles.exerciseChecklistInfo}>
                       <Text style={[styles.surfaceText, { fontSize: 16 }]}>
                         {exercise.name}
@@ -671,25 +703,173 @@ export default function ActiveWorkoutModal({
                         width: `${exerciseProgress * 100}%`,
                       }} />
                     </View>
+                    
+                    {/* Sets Display */}
+                    <View style={styles.sectionContainer}>
+                      <Text style={[styles.surfaceVariantText, styles.sectionTitle]}>
+                        Sets:
+                      </Text>
+                      {exercise.sets.map((set, setIndex) => {
+                        const parsedSet = parseSet(set, setIndex);
+                        const isSetCompleted = activeWorkout.completedSets.some(
+                          completedSet => 
+                            completedSet.exerciseName === exercise.name && 
+                            completedSet.setNumber === parsedSet.setNumber
+                        );
+                        
+                        return (
+                          <Card key={setIndex} style={[
+                            styles.workoutCard,
+                            { backgroundColor: isSetCompleted ? theme.colors.primaryContainer : theme.colors.surface }
+                          ]}>
+                            <Card.Content style={styles.cardContentMd}>
+                              <View style={[styles.rowBetweenCenter, { marginBottom: 12 }]}>
+                                <Text style={[
+                                  styles.surfaceVariantText, 
+                                  styles.surfaceText,
+                                  { fontSize: 16, color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurface }
+                                ]}>
+                                  Set {parsedSet.setNumber}
+                                </Text>
+                                <Button
+                                  mode={isSetCompleted ? "contained" : "outlined"}
+                                  onPress={() => toggleSetCompletion(exercise.name, parsedSet.setNumber)}
+                                  style={styles.setCompletionButton}
+                                  labelStyle={[styles.statLabel, { 
+                                    fontSize: 11,
+                                    textAlign: 'center',
+                                    includeFontPadding: false,
+                                  }]}
+                                  contentStyle={{ 
+                                    minHeight: 40,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  {isSetCompleted ? 'Completed' : 'Complete'}
+                                </Button>
+                              </View>
+                              
+                              <View style={[styles.rowBetweenCenter, { paddingVertical: 8 }]}>
+                                <View style={{ alignItems: 'center', minWidth: 60 }}>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.statLabel,
+                                    { color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant }
+                                  ]}>
+                                    Reps
+                                  </Text>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.surfaceText,
+                                    { fontSize: 14, color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurface }
+                                  ]}>
+                                    {parsedSet.reps || '-'}
+                                  </Text>
+                                </View>
+                                
+                                <View style={{ alignItems: 'center', minWidth: 60 }}>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.statLabel,
+                                    { color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant }
+                                  ]}>
+                                    Weight
+                                  </Text>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.surfaceText,
+                                    { fontSize: 14, color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurface }
+                                  ]}>
+                                    {parsedSet.weight === '' || parsedSet.weight === '0' ? 'Bodyweight' : `${parsedSet.weight} lbs`}
+                                  </Text>
+                                </View>
+                                
+                                <View style={{ alignItems: 'center', minWidth: 60 }}>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.statLabel,
+                                    { color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant }
+                                  ]}>
+                                    Time
+                                  </Text>
+                                  <Text style={[
+                                    styles.surfaceVariantText, 
+                                    styles.surfaceText,
+                                    { fontSize: 14, color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurface }
+                                  ]}>
+                                    {parsedSet.time || '-'}s
+                                  </Text>
+                                </View>
+                              </View>
+                              
+                              {/* Rest Timer Section */}
+                              {parsedSet.rest && parsedSet.rest !== '0' && (
+                                <View style={{
+                                  marginTop: 12,
+                                  paddingTop: 12,
+                                  borderTopWidth: 1,
+                                  borderTopColor: theme.colors.outline,
+                                }}>
+                                  <View style={[styles.rowBetweenCenter, { marginBottom: 8 }]}>
+                                    <Text style={[
+                                      styles.surfaceVariantText, 
+                                      styles.statLabel,
+                                      { color: isSetCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant }
+                                    ]}>
+                                      Rest Timer
+                                    </Text>
+                                    {activeWorkout.isResting && 
+                                     activeWorkout.currentRestTime > 0 && 
+                                     activeWorkout.completedSets.some(set => 
+                                       set.exerciseName === exercise.name && 
+                                       set.setNumber === parsedSet.setNumber
+                                     ) ? (
+                                      <Text style={[
+                                        styles.surfaceVariantText,
+                                        styles.surfaceText,
+                                        { 
+                                          fontSize: 16,
+                                          color: theme.colors.primary,
+                                          fontFamily: 'monospace'
+                                        }
+                                      ]}>
+                                        {Math.floor(activeWorkout.currentRestTime / 60)}:{(activeWorkout.currentRestTime % 60).toString().padStart(2, '0')}
+                                      </Text>
+                                    ) : (
+                                      <Text style={[
+                                        styles.surfaceVariantText,
+                                        { fontSize: 14 }
+                                      ]}>
+                                        {parsedSet.rest}s
+                                      </Text>
+                                    )}
+                                  </View>
+                                  
+                                  {activeWorkout.isResting && activeWorkout.currentRestTime > 0 && (
+                                    <Button
+                                      mode="contained"
+                                      onPress={skipRest}
+                                      style={{ width: '100%' }}
+                                      labelStyle={styles.statLabel}
+                                      compact
+                                    >
+                                      Skip Rest
+                                    </Button>
+                                  )}
+                                </View>
+                              )}
+                            </Card.Content>
+                          </Card>
+                        );
+                      })}
+                    </View>
                   </View>
 
                   {/* Action Buttons - Show for all exercises */}
                   <View style={styles.formContainer}>
                     <View style={styles.formGap}>
                       <View style={styles.timeRow}>
-                        <Button
-                          mode={isCompleted ? "outlined" : "contained"}
-                          onPress={() => toggleExerciseCompletion(exerciseIndex)}
-                          icon={isCompleted ? "close-circle" : "check-circle"}
-                          contentStyle={{ paddingVertical: 16 }}
-                          labelStyle={{ fontSize: 18, fontWeight: '700' }}
-                          style={[
-                            isCompleted ? styles.secondaryButton : styles.submitButton, 
-                            { flex: 1 }
-                          ]}
-                        >
-                          {isCompleted ? 'Not Done' : 'Done'}
-                        </Button>
                         <Button
                           mode="outlined"
                           onPress={() => {/* TODO: Open edit modal */}}
@@ -773,16 +953,6 @@ export default function ActiveWorkoutModal({
 
       {/* Modern Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        <Button
-          mode="contained"
-          onPress={repeatWorkout}
-          icon="replay"
-          contentStyle={{ paddingVertical: 16 }}
-          labelStyle={{ fontSize: 16, fontWeight: '700' }}
-          style={[styles.primaryButton, { backgroundColor: theme.colors.secondary }]}
-        >
-          Repeat Workout
-        </Button>
         <Button
           mode="outlined"
           onPress={() => {
