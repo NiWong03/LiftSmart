@@ -218,6 +218,70 @@ export default function ActiveWorkoutModal({
     // Checklist icon for when all exercises are marked as completed
   };
 
+  const completeSetForExercise = (exerciseIndex: number) => {
+    const exercise = activeWorkout.workout.exercises_list[exerciseIndex];
+    if (!exercise) return;
+    
+    // Create completed set record
+    const completedSet: ActiveSet = {
+      exerciseName: exercise.name,
+      setNumber: 1, // For now, just mark exercise as complete
+      reps: '0',
+      weight: '0',
+      time: '0',
+      rest: '0',
+      completed: true,
+      timestamp: new Date(),
+    };
+    
+    // Add to completed sets
+    const updatedCompletedSets = [...activeWorkout.completedSets, completedSet];
+    
+    // Mark exercise as completed
+    const updatedExercisesCompleted = [...activeWorkout.exercisesCompleted];
+    updatedExercisesCompleted[exerciseIndex] = true;
+    
+    // Update active workout state
+    const updatedActiveWorkout = {
+      ...activeWorkout,
+      completedSets: updatedCompletedSets,
+      exercisesCompleted: updatedExercisesCompleted,
+    };
+    
+    // Update parent's activeWorkout state
+    onUpdateActiveWorkout(updatedActiveWorkout);
+    
+    // Check if all exercises are completed
+    const allCompleted = updatedExercisesCompleted.every(completed => completed);
+    if (allCompleted) {
+      Alert.alert(
+        'Workout Complete! 🎉',
+        'Congratulations! You have completed all exercises in this workout.',
+        [
+          {
+            text: 'Finish Workout',
+            onPress: () => finishWorkout(),
+          },
+        ]
+      );
+    }
+  };
+
+  const toggleExerciseCompletion = (exerciseIndex: number) => {
+    // Toggle completion status
+    const updatedExercisesCompleted = [...activeWorkout.exercisesCompleted];
+    updatedExercisesCompleted[exerciseIndex] = !updatedExercisesCompleted[exerciseIndex];
+    
+    // Update active workout state with only the completed field
+    const updatedActiveWorkout = {
+      ...activeWorkout,
+      exercisesCompleted: updatedExercisesCompleted,
+    };
+    
+    // Update parent's activeWorkout state
+    onUpdateActiveWorkout(updatedActiveWorkout);
+  };
+
   const repeatWorkout = () => {
     // Clear existing timer and start fresh workout
     clearExistingTimer();
@@ -273,25 +337,18 @@ export default function ActiveWorkoutModal({
   const getProgress = () => {
     if (!activeWorkout) return 0;
     
-    const totalSets = activeWorkout.workout.exercises_list.reduce(
-      (total, exercise) => total + exercise.sets.length, 
-      0
-    );
+    // Count completed exercises
+    const completedExercises = activeWorkout.exercisesCompleted.filter(completed => completed).length;
+    const totalExercises = activeWorkout.workout.exercises_list.length;
     
-    return activeWorkout.completedSets.length / totalSets;
+    return totalExercises > 0 ? completedExercises / totalExercises : 0;
   };
 
   const getExerciseProgress = (exerciseIndex: number) => {
     if (!activeWorkout) return 0;
     
-    const exercise = activeWorkout.workout.exercises_list[exerciseIndex];
-    if (!exercise) return 0;
-    
-    const completedSetsForExercise = activeWorkout.completedSets.filter(
-      set => set.exerciseName === exercise.name
-    );
-    
-    return completedSetsForExercise.length / exercise.sets.length;
+    // Simply return 1 (100%) if exercise is completed, 0 (0%) if not
+    return activeWorkout.exercisesCompleted[exerciseIndex] ? 1 : 0;
   };
 
   const formatTime = (seconds: number): string => {
@@ -530,70 +587,127 @@ export default function ActiveWorkoutModal({
         </View>
       </Surface>
 
-      {/* Current Exercise - Modern Card */}
-      {currentExercise && activeWorkout.workoutStarted && (
-        <Surface style={[styles.workoutsContainer, styles.currentExerciseContainer]}>
-          <View style={{ overflow: 'hidden' }}>
-            <View style={[
-              styles.currentExerciseHeader,
-              { backgroundColor: theme.colors.primaryContainer }
-            ]}>
-            <View style={[styles.rowBetweenCenter, { marginBottom: 16 }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.onPrimaryText, styles.currentExerciseTitle]}>
-                  {currentExercise.name}
-                </Text>
-                <Text style={styles.currentExerciseSetInfo}>
-                  Set {activeWorkout.currentSetIndex + 1} of {currentExercise.sets.length}
-                </Text>
-              </View>
-              <View style={styles.currentExerciseBadge}>
-                <Text style={[styles.onPrimaryText, { fontSize: 14, fontWeight: '600' }]}>
-                  {currentExercise.sets.length} sets
-                </Text>
-              </View>
-            </View>
+      {/* All Exercises - Modern Cards */}
+      {activeWorkout.workoutStarted && (
+        <View style={styles.workoutsContainer}>
+          <Text style={[styles.surfaceText, styles.sectionTitle, { marginBottom: 16 }]}>
+            Workout Exercises
+          </Text>
+          
+          {activeWorkout.workout.exercises_list.map((exercise, exerciseIndex) => {
+            const isCompleted = activeWorkout.exercisesCompleted[exerciseIndex];
+            const exerciseProgress = getExerciseProgress(exerciseIndex);
             
-            {currentExercise.description && (
-              <Text style={[styles.surfaceVariantText, { 
-                fontSize: 14, 
-                fontStyle: 'italic',
-                lineHeight: 20,
-              }]}>
-                {currentExercise.description}
-              </Text>
-            )}
-          </View>
+            return (
+              <Surface 
+                key={exerciseIndex} 
+                style={[
+                  styles.workoutCard, 
+                  { 
+                    marginBottom: 16,
+                    backgroundColor: theme.colors.surface,
+                  }
+                ]}
+              >
+                <View style={{ overflow: 'hidden' }}>
+                  <View style={[
+                    styles.currentExerciseHeader,
+                    { 
+                      backgroundColor: theme.colors.surfaceVariant,
+                      borderRadius: 16,
+                      padding: 20,
+                    }
+                  ]}>
+                    <View style={[styles.rowBetweenCenter, { marginBottom: 16 }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.surfaceText, styles.currentExerciseTitle]}>
+                          {exercise.name}
+                        </Text>
+                        <Text style={[styles.surfaceVariantText, { fontSize: 14 }]}>
+                          {exercise.sets.length} sets
+                        </Text>
+                      </View>
+                      <View style={[
+                        styles.currentExerciseBadge,
+                        { 
+                          backgroundColor: isCompleted ? theme.colors.primaryContainer : theme.colors.surfaceVariant
+                        }
+                      ]}>
+                        <Text style={{ 
+                          fontSize: 14, 
+                          fontWeight: '600',
+                          color: isCompleted ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant
+                        }}>
+                          {isCompleted ? '✓ Done' : 'Active'}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    {exercise.description && (
+                      <Text style={[
+                        styles.surfaceVariantText, 
+                        { 
+                          fontSize: 14, 
+                          fontStyle: 'italic',
+                          lineHeight: 20,
+                        }
+                      ]}>
+                        {exercise.description}
+                      </Text>
+                    )}
+                    
+                    {/* Progress Bar */}
+                    <View style={[
+                      styles.exerciseProgressBar,
+                      { 
+                        backgroundColor: theme.colors.surfaceVariant,
+                        marginTop: 12,
+                      }
+                    ]}>
+                      <View style={{ 
+                        backgroundColor: isCompleted ? theme.colors.primary : theme.colors.outline,
+                        height: '100%',
+                        borderRadius: 3,
+                        width: `${exerciseProgress * 100}%`,
+                      }} />
+                    </View>
+                  </View>
 
-          <View style={styles.formContainer}>
-            {/* Simple Action Buttons */}
-            <View style={styles.formGap}>
-              <View style={styles.timeRow}>
-                <Button
-                  mode="contained"
-                  onPress={completeSet}
-                  icon="check-circle"
-                  contentStyle={{ paddingVertical: 16 }}
-                  labelStyle={{ fontSize: 18, fontWeight: '700' }}
-                  style={[styles.submitButton, { flex: 1 }]}
-                >
-                  Complete Set
-                </Button>
-                <Button
-                  mode="outlined"
-                  onPress={() => {/* TODO: Open edit modal */}}
-                  icon="pencil"
-                  contentStyle={{ paddingVertical: 16 }}
-                  labelStyle={{ fontSize: 16, fontWeight: '600' }}
-                  style={[styles.secondaryButton, { flex: 1, marginLeft: 16 }]}
-                >
-                  Edit Set
-                </Button>
-              </View>
-            </View>
-          </View>
-          </View>
-        </Surface>
+                  {/* Action Buttons - Show for all exercises */}
+                  <View style={styles.formContainer}>
+                    <View style={styles.formGap}>
+                      <View style={styles.timeRow}>
+                        <Button
+                          mode={isCompleted ? "outlined" : "contained"}
+                          onPress={() => toggleExerciseCompletion(exerciseIndex)}
+                          icon={isCompleted ? "close-circle" : "check-circle"}
+                          contentStyle={{ paddingVertical: 16 }}
+                          labelStyle={{ fontSize: 18, fontWeight: '700' }}
+                          style={[
+                            isCompleted ? styles.secondaryButton : styles.submitButton, 
+                            { flex: 1 }
+                          ]}
+                        >
+                          {isCompleted ? 'Not Done' : 'Done'}
+                        </Button>
+                        <Button
+                          mode="outlined"
+                          onPress={() => {/* TODO: Open edit modal */}}
+                          icon="pencil"
+                          contentStyle={{ paddingVertical: 16 }}
+                          labelStyle={{ fontSize: 18, fontWeight: '600' }}
+                          style={[styles.secondaryButton, { flex: 1, marginLeft: 16 }]}
+                        >
+                          Edit Set
+                        </Button>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </Surface>
+            );
+          })}
+        </View>
       )}
 
       {/* Completed Sets - Modern Design */}
