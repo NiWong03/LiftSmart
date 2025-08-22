@@ -4,10 +4,11 @@ import EditPlanHandler from '@/components/plans/EditPlanHandler';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme, Portal, Modal as PaperModal } from 'react-native-paper';
+import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 
 
 const HomeScreen = () => {
@@ -20,6 +21,7 @@ const HomeScreen = () => {
   const [pendingEditResponse, setPendingEditResponse] = useState<any>(null);
   const [editApplied, setEditApplied] = useState(false);
   const authUserId = FIREBASE_AUTH.currentUser?.uid ?? '';
+  const [user, setUser] = useState<User | null>(null);
 
   const [draftPlan, setDraftPlan] = useState({
     name: '',
@@ -47,6 +49,9 @@ const HomeScreen = () => {
           return dateA.getTime() - dateB.getTime();
         })[0]
       setUpcomingWorkout(chosenWorkout)
+      onAuthStateChanged(FIREBASE_AUTH, (user) => {
+        setUser(user);
+      });
     }
   , [workouts])
 
@@ -96,41 +101,10 @@ const HomeScreen = () => {
               Good morning,
             </Text>
             <Text variant="headlineMedium" style={[styles.name, { color: theme.colors.primary }]}>
-              - Insert User's Name - 
+            {user?.email || 'Guest'} 
             </Text>
           </View>
 
-          {/* Quick Stats */}
-          <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  7
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Day Streak
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  12
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Workouts
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  85%
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Goal Progress
-                </Text>
-              </View>
-            </View>
-          </Surface>
 
           {/* Current Plan Progress Card */}
           <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
@@ -262,22 +236,10 @@ const HomeScreen = () => {
                     size={32}
                     iconColor={theme.colors.primary}
                     style={[styles.actionIcon, { backgroundColor: theme.colors.primaryContainer }]}
-                    onPress={() => console.log('Schedule')}
+                    onPress={() => router.push('/(tabs)/schedule')}
                   />
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
                     Schedule
-                  </Text>
-                </View>
-                <View style={styles.actionItem}>
-                  <IconButton
-                    icon="chart-line"
-                    size={32}
-                    iconColor={theme.colors.secondary}
-                    style={[styles.actionIcon, { backgroundColor: theme.colors.secondaryContainer }]}
-                    onPress={() => console.log('Progress')}
-                  />
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-                    Progress
                   </Text>
                 </View>
                 <View style={styles.actionItem}>
@@ -286,7 +248,7 @@ const HomeScreen = () => {
                     size={32}
                     iconColor={theme.colors.primary}
                     style={[styles.actionIcon, { backgroundColor: theme.colors.tertiaryContainer }]}
-                    onPress={() => console.log('Plan Details')}
+                    onPress={() => router.push('/(tabs)/plans?openDetails=true')}
                   />
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
                     Plan Details
@@ -298,7 +260,7 @@ const HomeScreen = () => {
                     size={32}
                     iconColor={theme.colors.primary}
                     style={[styles.actionIcon, { backgroundColor: theme.colors.primaryContainer }]}
-                    onPress={() => console.log('Add Workout')}
+                    onPress={() => router.push('/(tabs)/plans?openDetails=true&openAddWorkout=true')}
                   />
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
                     Add Workout

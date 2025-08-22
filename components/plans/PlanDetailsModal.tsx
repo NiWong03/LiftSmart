@@ -13,9 +13,10 @@ interface PlanDetailsModalProps {
   visible: boolean;
   onDismiss: () => void;
   plan: WorkoutPlan;
+  openAddWorkout?: boolean;
 }
 
-function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
+function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: PlanDetailsModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
   const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans, deleteWorkout, deletePlan } = useWorkout();
@@ -37,6 +38,13 @@ function PlanDetailsModal({ visible, onDismiss, plan }: PlanDetailsModalProps) {
       setExpandedWorkouts({});
     }
   }, [visible]);
+
+  // Auto-open add workout modal if requested
+  useEffect(() => {
+    if (visible && openAddWorkout) {
+      setShowAddWorkout(true);
+    }
+  }, [visible, openAddWorkout]);
 
   const toggleWorkoutExpansion = (workoutId: string) => {
     setExpandedWorkouts(prev => ({

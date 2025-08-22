@@ -1,11 +1,11 @@
 import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Timestamp } from 'firebase/firestore';
 
 
 interface CurrentPlanOverviewProps {
@@ -162,6 +162,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         visible={showPlanDetails}
         onDismiss={() => setShowPlanDetails(false)}
         plan={selectedPlan}
+        openAddWorkout={params.openAddWorkout === 'true'}
       />
     </Surface>
   );
