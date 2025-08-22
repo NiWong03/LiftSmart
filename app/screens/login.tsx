@@ -53,7 +53,7 @@ const Login = () => {
         alert('user created');
     } catch (error) {
         console.log(error);
-        alert('No sign up for u:\n ' + error);
+        alert('No sign up for u:\n' + 'Please enter email and password above to sign up\n' + error);
         
     } finally {
         setLoading(false);
