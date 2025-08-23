@@ -13,6 +13,7 @@ const Schedule: React.FC = () => {
   const { events, addEvent, getWorkoutEvents } = useWorkout();
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'day'>('week');
   const [menuVisible, setMenuVisible] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [newWorkout, setNewWorkout] = useState({
     day: 'Monday',
     date: new Date().toISOString().split('T')[0],
@@ -119,8 +120,7 @@ const Schedule: React.FC = () => {
               style={[styles.dropdownButton, { borderColor: colors.primary, backgroundColor: colors.primary }]}
               textColor={"#FFFFFF"}
             >
-              {getViewModeLabel()}
-            </Button>
+              {getViewModeLabel()} · {currentDate.toLocaleDateString('default', { month: 'long' })}            </Button>
           }
           contentStyle={{ backgroundColor: colors.surface }}
         >
@@ -128,6 +128,7 @@ const Schedule: React.FC = () => {
             onPress={() => {
               setViewMode('week');
               setMenuVisible(false);
+              setCurrentDate(new Date());
             }}
             title="Week View"
             titleStyle={{ color: colors.onSurface }}
@@ -138,6 +139,7 @@ const Schedule: React.FC = () => {
             onPress={() => {
               setViewMode('month');
               setMenuVisible(false);
+              setCurrentDate(new Date());
             }}
             title="Month View"
             titleStyle={{ color: colors.onSurface }}
@@ -148,6 +150,7 @@ const Schedule: React.FC = () => {
             onPress={() => {
               setViewMode('day');
               setMenuVisible(false);
+              setCurrentDate(new Date());
             }}
             title="Day View"
             titleStyle={{ color: colors.onSurface }}
@@ -165,7 +168,7 @@ const Schedule: React.FC = () => {
           
         }}
         events={allEvents}
-        height={screenHeight}
+        height={screenHeight-120}
         onPressEvent={(event) => {
           // react-native-big-calendar passes event object
           setSelectedEvent(event as { title: string; start: Date; end: Date });
@@ -175,6 +178,10 @@ const Schedule: React.FC = () => {
         hourRowHeight={Math.max(40, screenHeight * 0.08)}
         mode={viewMode}
         theme={calendarTheme}
+
+        onSwipeEnd={(date) => {
+          setCurrentDate(date);
+        }}
       />
 
       <AddWorkoutModal
