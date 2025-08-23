@@ -178,10 +178,10 @@ const Schedule: React.FC = () => {
         hourRowHeight={Math.max(40, screenHeight * 0.08)}
         mode={viewMode}
         theme={calendarTheme}
-
         onSwipeEnd={(date) => {
           setCurrentDate(date);
         }}
+        scrollOffsetMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
       />
 
       <AddWorkoutModal
