@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
+
 import { IconButton, Surface, Text, useTheme, TextInput, Button, Switch } from 'react-native-paper';
 import { WorkoutPlan, useWorkout } from './WorkoutContext';
 import { createPlanStyles } from './styles';

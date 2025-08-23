@@ -117,6 +117,37 @@ const HomeScreen = () => {
             </Text>
           </View>
 
+          {/* Quick Stats */}
+          <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+            <View style={styles.workoutDetails}>
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  7
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Day Streak
+                </Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  12
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Workouts
+                </Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                  85%
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Goal Progress
+                </Text>
+              </View>
+            </View>
+          </Surface>
 
           {/* Current Plan Progress Card */}
           <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
@@ -373,7 +404,6 @@ const HomeScreen = () => {
         }}
         onDismiss={() => setShowAddPlanModal(false)}
       />
-
       <EditPlanHandler
         visible={showEditHandler}
         aiResponse={pendingEditResponse}
@@ -423,11 +453,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   statItem: {
     alignItems: 'center',
