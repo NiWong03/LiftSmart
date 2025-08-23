@@ -8,11 +8,14 @@ import { Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { Card, IconButton, Text, useTheme } from 'react-native-paper';
+import { useLocalSearchParams } from 'expo-router';
 
 const PlansScreen = () => {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
   const { currentPlan, workouts, updatePlan, updateWorkouts, addPlan, allPlans } = useWorkout();
+  const params = useLocalSearchParams();
+  const shouldOpenDetails = params.openDetails === 'true';
   
   const [selectedEmoji, setSelectedEmoji] = useState(currentPlan.emoji);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
