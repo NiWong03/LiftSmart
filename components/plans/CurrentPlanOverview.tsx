@@ -33,7 +33,8 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
           const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : w.date;
           return workoutDate > now && 
                  workoutDate.getDate() === now.getDate() && 
-                 w.completed === false;
+                 w.completed === false &&
+                 w.planId === currentPlan.planID; // Only show workouts from current plan
         })
         .sort((a,b) => {
           const dateA = a.date instanceof Timestamp ? a.date.toDate() : a.date;
@@ -42,11 +43,16 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         })[0]
       setUpcomingWorkout(chosenWorkout)
     }
-  , [workouts])
+  , [workouts, currentPlan.planID]) // Add currentPlan.planID to dependencies
 
     // Plan Details Modal--------------------------------
     const [showPlanDetails, setShowPlanDetails] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(currentPlan);
+
+    // Update selectedPlan when currentPlan changes
+    useEffect(() => {
+      setSelectedPlan(currentPlan);
+    }, [currentPlan]);
 
     // Auto-open plan details if requested
     useEffect(() => {
