@@ -24,8 +24,14 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
   // Get the updated plan data from context instead of using the prop
   const updatedPlan = allPlans.find(p => p.planID === plan.planID) || plan;
 
-  // Filter workouts to only show those belonging to this plan
-  const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
+  // Filter workouts to only show those belonging to this plan and sort by date (earliest first)
+  const planWorkouts = workouts
+    .filter(workout => workout.planId === updatedPlan.planID)
+    .sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+      const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
   const [showAddWorkout, setShowAddWorkout] = useState(false);
