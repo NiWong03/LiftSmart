@@ -75,7 +75,15 @@ const HomeScreen = () => {
       const mappedWorkouts: Workout[] = (plan.workouts || []).map((w: any, index: number) => ({
         id: `ai-${Date.now()}-${index}`,
         day: w.day || '',
-        date: new Date(typeof w.date === 'string' ? w.date : w.date?.toString?.() || ''),
+        date: (() => {
+          const dateStr = typeof w.date === 'string' ? w.date : w.date?.toString?.() || '';
+          if (dateStr) {
+            // Parse date in local timezone to avoid UTC conversion issues
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+          }
+          return new Date();
+        })(),
         name: w.name || '',
         duration: w.duration,
         startTime: w.startTime,

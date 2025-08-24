@@ -249,15 +249,19 @@ IMPORTANT:
 - Provide specific, actionable advice when possible
 - Use a friendly, supportive tone`;
         } else {
-                     // For new plans, use the original create prompt
+                     // For new plans
            systemPrompt = `Create a comprehensive workout plan that spans the FULL requested duration with progressive overload and variety.
 
 CRITICAL REQUIREMENTS:
 - Create workouts for the ENTIRE requested duration (e.g., 6 weeks = 6 weeks of workouts, not just 1 week)
 - Implement progressive overload: gradually increase weights, reps, or intensity each week
 - Add variety: rotate different exercises, change workout structures, and vary training methods
-- Create 3-5 workouts per week depending on the user's request and fitness level
+- Create 4 workouts per week on the days the user specifies
+- If user doesn't specify days, use default: Monday, Wednesday, Friday, Saturday
+- Start the first workout TOMORROW (the day after today)
+- Schedule workouts on the specified days, starting from tomorrow
 - Each week should have different exercises or variations to prevent plateaus
+- IMPORTANT: Generate ALL workouts for the full duration - do not truncate or skip weeks
 
 PROGRESSIVE OVERLOAD STRATEGIES:
 - Week 1-2: Focus on form and moderate weights
@@ -292,8 +296,8 @@ interface Workout {
   date: string;                      // "YYYY-MM-DD" format
   name: string;                      // e.g., "Week 1 - Upper Body Strength"
   duration: string;                  // e.g., "45 min"
-  startTime: string;                 // e.g., "8:30 AM"
-  endTime: string;                   // e.g., "9:15 AM"
+  startTime: string;                 // e.g., "1:00 PM"
+  endTime: string;                   // e.g., "2:00 PM"
   exercises: number;                 // must equal exercises_list.length
   completed: boolean;                // always false
   difficulty: "Easy" | "Medium" | "Hard";
@@ -316,13 +320,27 @@ RULES:
 - Create workouts for EVERY week of the requested duration
 - Use progressive overload: increase weights/reps each week
 - Add exercise variety between weeks
-- Set dates sequentially starting from current date
+- Set dates sequentially starting from TOMORROW (not today)
+- Set ALL workout times to "1:00 PM" by default
 - For sets: [reps, weight, time, rest] format
 - Valid JSON only, no markdown, no comments, no trailing commas
 - Return ONLY the JSON object, no additional text or explanations
 - Do not include any placeholder text like "// Week 2-6 workouts would continue..."
+- CRITICAL: Generate the COMPLETE plan with ALL workouts - do not truncate the response
+- If the plan is long, ensure you complete ALL weeks before ending the JSON
 
-Current date: ${new Date().toISOString().split('T')[0]}`;
+Current date: ${new Date().toISOString().split('T')[0]}
+Tomorrow's date: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+
+SCHEDULE CALCULATION:
+Tomorrow is: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long' })}
+
+DEFAULT SCHEDULE (if user doesn't specify days):
+- Use Monday, Wednesday, Friday, Saturday
+
+CUSTOM SCHEDULE (if user specifies days):
+- Use the exact days the user mentions
+- Start from tomorrow and follow the user's specified pattern`;
         }
 
         const response2 = await openai.chat.completions.create({
