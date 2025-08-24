@@ -60,11 +60,13 @@ interface WorkoutContextType {
   workouts: Workout[];
   events: CalendarEvent[];
   loading: boolean;
+  deletingPlans: string[];
   
   // Plan operations
   updatePlan: (plan: Partial<WorkoutPlan>) => Promise<void>;
   addPlan: (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]) => Promise<void>;
   deletePlan: (planId: string) => Promise<void>;
+  startPlanDeletion: (planId: string) => void;
   
   // Workout operations (for components to use)
   addWorkout: (workout: Omit<Workout, 'id' | 'userId'>, planId?: string) => Promise<void>;
@@ -106,6 +108,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
    const [workouts, setWorkouts] = useState<Workout[]>([]);
 
   const [allPlans, setAllPlans] = useState<WorkoutPlan[]>([]);
+  const [deletingPlans, setDeletingPlans] = useState<string[]>([]);
   
   const [currentPlan, setCurrentPlan] = useState<WorkoutPlan>({
     name: "Plan Name",
@@ -482,25 +485,35 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     }
   };
 
+  const startPlanDeletion = (planId: string): void => {
+    setDeletingPlans(prev => [...prev, planId]);
+  };
+
   const deletePlan = async (planId: string): Promise<void> => {
     if (!userId) throw new Error('No user logged in');
-    await deleteDoc(doc(FIREBASE_DB, 'plans', planId));
-    setAllPlans(prevPlans => prevPlans.filter(plan => plan.planID !== planId));
-    if (currentPlan.planID === planId) {
-      setCurrentPlan({
-        name: "Plan Name",
-        goal: "I want to finish developing app in 6 weeks",
-        duration: 6,
-        progress: "Week 3 of 6",
-        workoutsCompleted: 0,
-        totalWorkouts: 0,
-        difficulty: "Difficulty Load",
-        emoji: "💪",
-        planID: "1",
-        current: true
-      });
+    
+    // Remove from deleting plans when deletion is complete
+    try {
+      await deleteDoc(doc(FIREBASE_DB, 'plans', planId));
+      setAllPlans(prevPlans => prevPlans.filter(plan => plan.planID !== planId));
+      if (currentPlan.planID === planId) {
+        setCurrentPlan({
+          name: "Plan Name",
+          goal: "I want to finish developing app in 6 weeks",
+          duration: 6,
+          progress: "Week 3 of 6",
+          workoutsCompleted: 0,
+          totalWorkouts: 0,
+          difficulty: "Difficulty Load",
+          emoji: "💪",
+          planID: "1",
+          current: true
+        });
+      }
+      console.log('Plan deleted successfully:', planId);
+    } finally {
+      setDeletingPlans(prev => prev.filter(id => id !== planId));
     }
-    console.log('Plan deleted successfully:', planId);
   };
 
   // ==================== LOCAL OPERATIONS ====================
@@ -553,11 +566,13 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     workouts,
     events,
     loading,
+    deletingPlans,
     
     // Firestore operations
     updatePlan,
     addPlan,
     deletePlan,
+    startPlanDeletion,
     addWorkout,
     updateWorkout,
     deleteWorkout,

@@ -145,7 +145,7 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
     const addKeywords = ['add to', 'add more', 'add another', 'add', 'append'];
     const planKeywords = ['create', 'make', 'build', 'generate', 'new plan', 'workout plan', 'training plan'];
-    const adviceKeywords = ['advice', 'tip', 'help', 'how to', 'how do','what should', 'recommend', 'suggest', 'best way', 'proper form', 'technique', 'nutrition', 'diet', 'supplement', 'recovery', 'injury', 'pain', 'motivation', 'consistency', 'how can', 'how should', 'explain', 'elaborate'];
+    const adviceKeywords = ['why', 'advice', 'tip', 'help', 'how to', 'how do','what should', 'recommend', 'suggest', 'best way', 'proper form', 'technique', 'nutrition', 'diet', 'supplement', 'recovery', 'injury', 'pain', 'motivation', 'consistency', 'how can', 'how should', 'explain', 'elaborate'];
     
     // Check for edit keywords
     const hasEditKeyword = editKeywords.some(keyword => 

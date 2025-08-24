@@ -7,7 +7,7 @@ import { createPlanStyles } from './styles';
 
 export default function PlanListCard() {
   const theme = useTheme();
-  const { allPlans } = useWorkout();
+  const { allPlans, deletingPlans } = useWorkout();
   const styles = createPlanStyles(theme);
   
   // Sort plans to put current plan first
@@ -37,39 +37,53 @@ export default function PlanListCard() {
             No plans created yet
           </Text>
         ) : (
-          <ScrollView style={{ maxHeight: 200 }}>
-            {sortedPlans.map((plan, index) => (
-              <View key={plan.planID}>
-                <View style={{ 
-                  flexDirection: 'row', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  paddingVertical: 8 
-                }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <Text variant="bodyMedium" style={styles.surfaceText}>
-                      {plan.name}
-                    </Text>
-                    {plan.current && (
-                      <Text variant="bodySmall" style={[styles.primaryText, { marginLeft: 8 }]}>
-                        (Current)
-                      </Text>
-                    )}
-                  </View>
-                  <Button
-                    mode="outlined"
-                    compact
-                    onPress={() => handleShowDetails(plan)}
-                    icon="information-outline"
-                    style={{ borderRadius: 12 }}
-                  >
-                    Details
-                  </Button>
-                </View>
-                {index < sortedPlans.length - 1 && <Divider style={{ marginVertical: 4 }} />}
-              </View>
-            ))}
-          </ScrollView>
+                     <ScrollView style={{ maxHeight: 200 }}>
+             {sortedPlans.map((plan, index) => {
+               const isDeleting = deletingPlans.includes(plan.planID);
+               
+               return (
+                 <View key={plan.planID}>
+                   <View style={{ 
+                     flexDirection: 'row', 
+                     justifyContent: 'space-between', 
+                     alignItems: 'center',
+                     paddingVertical: 8 
+                   }}>
+                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                       <Text 
+                         variant="bodyMedium" 
+                         style={[
+                           styles.surfaceText,
+                           isDeleting && { opacity: 0.6 }
+                         ]}
+                         numberOfLines={1}
+                         ellipsizeMode="tail"
+                       >
+                         {isDeleting ? `${plan.name} (Deleting...)` : plan.name}
+                       </Text>
+                       {plan.current && !isDeleting && (
+                         <Text variant="bodySmall" style={[styles.primaryText, { marginLeft: 8, flexShrink: 0 }]}>
+                           (Current)
+                         </Text>
+                       )}
+                     </View>
+                     {!isDeleting && (
+                       <Button
+                         mode="outlined"
+                         compact
+                         onPress={() => handleShowDetails(plan)}
+                         icon="information-outline"
+                         style={{ borderRadius: 12, flexShrink: 0 }}
+                       >
+                         Details
+                       </Button>
+                     )}
+                   </View>
+                   {index < sortedPlans.length - 1 && <Divider style={{ marginVertical: 4 }} />}
+                 </View>
+               );
+             })}
+           </ScrollView>
         )}
       </Card.Content>
       

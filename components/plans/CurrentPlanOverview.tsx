@@ -17,7 +17,7 @@ interface CurrentPlanOverviewProps {
 
 export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: CurrentPlanOverviewProps) {
   const theme = useTheme();
-  const { currentPlan, workouts } = useWorkout();
+  const { currentPlan, workouts, deletingPlans } = useWorkout();
   const styles = createPlanStyles(theme);
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const params = useLocalSearchParams();
@@ -154,8 +154,9 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
           style={[styles.secondaryButton, { flex: 1, marginTop: 16 }]}
           onPress={() => setShowPlanDetails(true)}
           icon="information-outline"
+          disabled={deletingPlans.includes(currentPlan.planID)}
         >
-          Details
+          {deletingPlans.includes(currentPlan.planID) ? 'Plan Deleting...' : 'Details'}
         </Button>
       
       <PlanDetailsModal
