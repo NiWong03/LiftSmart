@@ -178,6 +178,7 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     const isPlanRequest = hasPlanKeyword || (!hasAdviceKeyword && !isEditRequest);
     const isAdviceRequest = hasAdviceKeyword && !isEditRequest;
 
+    try { 
         let systemPrompt = '';
         
         if (isEditRequest && currentPlan.name) {
@@ -248,81 +249,80 @@ IMPORTANT:
 - Provide specific, actionable advice when possible
 - Use a friendly, supportive tone`;
         } else {
-          // For new plans, use the original create prompt
-          systemPrompt = `Produce a workout plan in two parts: a concise, human-readable response string stating describing the workout plan for the user , followed by the WorkoutPlan payload in JSON format (silently, without prose). The summary should provide a clear overview of the plan purpose, total duration in weeks, total number of workouts, difficulty, and the user's goal.
-                            Rules:
-                            - Output must be a JSON object with two fields:
-                                - "response": (string) A clear, 1-4 sentence summary for the user stating understanding of the prompt and describing the workout plan that is being created for the user, the overall workout plan (include plan name, duration, goal, workout count, and difficulty).
-                                - "plan": (object) The WorkoutPlan payload as specified by the schema in the prompt below.
-                            - Do not include any other text, prose, explanations, or formatting.
-                            - Use only the fields provided in the schemas.
-                            - Continue to follow all the schema and formatting instructions for the WorkoutPlan, Workout, Exercise, and Set objects from the original prompt.
-                            - For all dates, use the format:("YYYY-MM-DD").
-                            - For sets, use arrays with the precise required order and types: [reps, weight, time, rest].
-                            - Do not include id, userId, or any other extraneous fields.
+                     // For new plans, use the original create prompt
+           systemPrompt = `Create a comprehensive workout plan that spans the FULL requested duration with progressive overload and variety.
 
-                            # Output Format
+CRITICAL REQUIREMENTS:
+- Create workouts for the ENTIRE requested duration (e.g., 6 weeks = 6 weeks of workouts, not just 1 week)
+- Implement progressive overload: gradually increase weights, reps, or intensity each week
+- Add variety: rotate different exercises, change workout structures, and vary training methods
+- Create 3-5 workouts per week depending on the user's request and fitness level
+- Each week should have different exercises or variations to prevent plateaus
 
-                            Respond with a single JSON object with the following keys:
-                            - "response": string, a user-facing, high-level description of the plan and confirmation that the correct plan is being created for the user.
-                            - "plan": follow the schema defined below
-                            type Set = [reps: number, weight: string, time: number, rest: number];
+PROGRESSIVE OVERLOAD STRATEGIES:
+- Week 1-2: Focus on form and moderate weights
+- Week 3-4: Increase weights by 5-10% or add 1-2 reps
+- Week 5-6+: Further increase intensity, add supersets, or change exercise variations
+- Vary rest periods, rep ranges, and exercise order
 
-                            interface Exercise {
-                            name: string;
-                            sets: fixed-length arrays with exactly 4 items in this order → [reps:number, weight:string, time:number, rest:number]; e.g., [[10, "45 lb", 0, 90], [8, "50 lb", 0, 120]]
-                            description?: string;
-                            }
+WORKOUT VARIETY EXAMPLES:
+- Week 1: Traditional strength training
+- Week 2: Add supersets or circuit training
+- Week 3: Change exercise variations (e.g., barbell → dumbbell)
+- Week 4: Add plyometric or explosive movements
+- Week 5: Increase volume or intensity
+- Week 6: Peak week with maximum effort
 
-                            interface Workout {
-                            // id and userId are assigned by the app; omit them
-                            day: string;                       // e.g., "Monday"
-                            date: ("YYYY-MM-DD");              // e.g., "2025-08-20"
-                            name: string;                      // e.g., "Push Day"
-                            duration: string;                  // e.g., "45 min"
-                            startTime: string;                 // e.g., "8:30 AM"
-                            endTime: string;                   // e.g., "9:15 AM"
-                            exercises: number;                 // must equal exercises_list.length
-                            completed: boolean;                // always false on creation
-                            difficulty: "Easy" | "Medium" | "Hard";
-                            exercises_list: Exercise[];
-                            }
+OUTPUT FORMAT:
+Return JSON with:
+- "response": A clear summary describing the plan, duration, total workouts, and progressive approach
+- "plan": Complete WorkoutPlan object with workouts for the FULL duration
 
-                            interface WorkoutPlan {
-                            name: string;
-                            duration: number;                  // in weeks
-                            progress: string;                  // e.g., "0%"
-                            goal: string;
-                            workoutsCompleted: number;         // 0 on creation
-                            totalWorkouts: number;             // workouts.length
-                            difficulty: "Easy" | "Medium" | "Hard";
-                            emoji: string;                     // e.g., "💪"
-                            workouts: Workout[];               // optional; include to pre-create workouts
-                            }
+SCHEMA:
+type Set = [reps: number, weight: string, time: number, rest: number];
 
-                            Rules:
-                            - Output valid JSON only.
-                            - Do not include fields not listed above.
-                            - For time, use "h:mm AM/PM".
-                            - For sets, use arrays like [10, "45 lb", 0, 90].
-                            - Set workoutsCompleted = 0 and totalWorkouts = workouts.length.
+interface Exercise {
+  name: string;
+  sets: Set[];
+  description?: string;
+}
 
-                            Example:
-                            {
-                            "summary": "The 'Beginner Strength' plan is a 4-week program designed to help you build muscle with 12 total workouts at a Medium difficulty.",
-                            "plan": {
-                                ...WorkoutPlan object (per schema)...
-                            }
-                            }
+interface Workout {
+  day: string;                       // e.g., "Monday"
+  date: string;                      // "YYYY-MM-DD" format
+  name: string;                      // e.g., "Week 1 - Upper Body Strength"
+  duration: string;                  // e.g., "45 min"
+  startTime: string;                 // e.g., "8:30 AM"
+  endTime: string;                   // e.g., "9:15 AM"
+  exercises: number;                 // must equal exercises_list.length
+  completed: boolean;                // always false
+  difficulty: "Easy" | "Medium" | "Hard";
+  exercises_list: Exercise[];
+}
 
-                            # Notes
-                            - The summary may include placeholders such as [plan goal], [number of weeks], [total workouts], and [difficulty] as needed.
-                            - The summary string must be immediately understandable to the user and must not contain technical JSON-specific terms or field names.
+interface WorkoutPlan {
+  name: string;
+  duration: number;                  // total weeks requested
+  progress: string;                  // "0%"
+  goal: string;
+  workoutsCompleted: number;         // 0
+  totalWorkouts: number;             // total workouts across all weeks
+  difficulty: "Easy" | "Medium" | "Hard";
+  emoji: string;                     // e.g., "💪"
+  workouts: Workout[];               // ALL workouts for the full duration
+}
 
-                            # Reminder
-                            Your main objective is to provide a "summary" string alongside the required WorkoutPlan JSON in a single top-level JSON object response, following all structure, formatting, and field restrictions above.
+RULES:
+- Create workouts for EVERY week of the requested duration
+- Use progressive overload: increase weights/reps each week
+- Add exercise variety between weeks
+- Set dates sequentially starting from current date
+- For sets: [reps, weight, time, rest] format
+- Valid JSON only, no markdown, no comments, no trailing commas
+- Return ONLY the JSON object, no additional text or explanations
+- Do not include any placeholder text like "// Week 2-6 workouts would continue..."
 
-                            Current date: ${new Date().toISOString().split('T')[0]}`;
+Current date: ${new Date().toISOString().split('T')[0]}`;
         }
 
         const response2 = await openai.chat.completions.create({
@@ -368,12 +368,47 @@ IMPORTANT:
                    setIsTyping(true);
                    setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
                  }
-                 } catch (parseError) {
-             // If not JSON, use the raw response with typing animation
-             setIsTyping(true);
-             setFullTypingMessage(response.choices[0].message.content || 'Sorry, I couldn\'t generate a response.');
-             console.log(parseError);
-         }
+        } catch (parseError) {
+            // If not JSON, use the raw response with typing animation
+            console.log('JSON Parse Error:', parseError);
+            console.log('Raw Response:', response2.choices[0].message.content);
+            
+            // Try to extract just the JSON part if there's extra text
+            const responseText = response2.choices[0].message.content || '';
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            
+            if (jsonMatch) {
+                try {
+                    const parsedResponse = JSON.parse(jsonMatch[0]);
+                    // Handle different action types
+                    if (parsedResponse.action === 'edit') {
+                        setHasEditSuggestions(true);
+                        setHasDraftPlan(false);
+                        setStoredEditResponse(parsedResponse);
+                    } else {
+                        onParsedResponse?.(parsedResponse);
+                        setHasDraftPlan(true);
+                        setHasEditSuggestions(false);
+                    }
+                    
+                    // Start typing animation for the response
+                    setIsTyping(true);
+                    setFullTypingMessage(parsedResponse.response || 'Plan created successfully!');
+                } catch (secondParseError) {
+                    // If still can't parse, show error message
+                    setIsTyping(true);
+                    setFullTypingMessage('I created a workout plan, but there was an issue processing it. Please try asking again with a simpler request.');
+                }
+            } else {
+                // No JSON found, show the raw response
+                setIsTyping(true);
+                setFullTypingMessage(responseText || 'Sorry, I couldn\'t generate a response.');
+            }
+        }
+    } catch (error) {
+        console.error("OpenAI Error:", error);
+    } finally {
+        setIsLoading(false);
     }
   };
 
