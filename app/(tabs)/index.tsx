@@ -396,6 +396,8 @@ const HomeScreen = () => {
               current: false,
               planID: '' as any,
             } as any, p.workouts);
+            // Hide the "Plan is ready" button after successful plan creation
+            setEditApplied(true);
           } catch (e) {
             console.error('Failed to create plan from AI draft:', e);
           } finally {
