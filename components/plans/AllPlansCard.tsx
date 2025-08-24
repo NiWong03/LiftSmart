@@ -49,7 +49,7 @@ export default function PlanListCard() {
                      alignItems: 'center',
                      paddingVertical: 8 
                    }}>
-                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 0.7, marginRight: 8 }}>
                        <Text 
                          variant="bodyMedium" 
                          style={[
