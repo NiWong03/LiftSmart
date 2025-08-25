@@ -25,6 +25,8 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
 
   // Check if this is the only plan - if so, disable the current switch
   const isOnlyPlan = allPlans.length === 1;
+  // Disable unchecking if this is the current plan (user can only switch to other plans, not uncheck current)
+  const isCurrentPlan = plan.current;
 
   const handleSave = async () => {
     if (!planName.trim()) return;
@@ -124,9 +126,11 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
                   <Text variant="labelLarge" style={[styles.primaryTextRegular, { marginBottom: 8 }]}>
                     Set as Current Plan
                   </Text>
-                  <Text variant="bodySmall" style={[styles.surfaceVariantText, isOnlyPlan && { color: theme.colors.onBackground }]}>
+                  <Text variant="bodySmall" style={[styles.surfaceVariantText, (isOnlyPlan || isCurrentPlan) && { color: theme.colors.onBackground }]}>
                     {isOnlyPlan 
                       ? "This is your only plan, so it must remain current"
+                      : isCurrentPlan
+                      ? "This is your current plan and cannot be unchecked"
                       : "This plan will appear as your active plan on the main page"
                     }
                   </Text>
@@ -135,7 +139,7 @@ export default function EditPlanModal({ visible, plan, onDismiss, onUpdate }: Ed
                   value={isCurrent}
                   onValueChange={setIsCurrent}
                   color={theme.colors.primary}
-                  disabled={isOnlyPlan}
+                  disabled={isOnlyPlan || isCurrentPlan}
                 />
               </View>
 
