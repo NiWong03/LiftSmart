@@ -23,8 +23,18 @@ export default function WorkoutPage() {
       
       const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
       const today = new Date();
-      const endOfWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-      return workoutDate >= today && workoutDate <= endOfWeek;
+      
+      // Get start of current week (Sunday)
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      // Get end of current week (Saturday)
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
     })
     .sort((a, b) => {
       const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
