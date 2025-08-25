@@ -48,12 +48,18 @@ const HomeScreen = () => {
   useEffect(
     () => {
       const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+      
       const chosenWorkout = workouts
         .filter(w => {
           const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : new Date(w.date);
-          return workoutDate > now && 
-                 workoutDate.getDate() === now.getDate() && 
-                 w.completed === false;
+          // Show workouts that are today (including future times today) and not completed
+          return workoutDate >= today && 
+                 workoutDate < tomorrow && 
+                 w.completed === false &&
+                 w.planId === currentPlan.planID; // Only show workouts from current plan
         })
         .sort((a,b) => {
           const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
@@ -65,7 +71,7 @@ const HomeScreen = () => {
         setUser(user);
       });
     }
-  , [workouts])
+  , [workouts, currentPlan.planID]) // Add currentPlan.planID to dependencies
 
   const handleParsedResponse = (data: any) => {
     try {
