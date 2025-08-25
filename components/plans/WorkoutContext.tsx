@@ -251,6 +251,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   const updateWorkout = async (workoutId: string, updates: Partial<Workout>): Promise<void> => {
+    console.log('DEBUG - updateWorkout called with:', { workoutId, updates });
+    
     // Clean the updates to make them Firestore-serializable
     const cleanUpdates: any = { ...updates };
     
@@ -522,6 +524,14 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
       const getWorkoutEvents = (): CalendarEvent[] => {
+      console.log('DEBUG - getWorkoutEvents called with workouts:', workouts.map(w => ({ 
+        id: w.id, 
+        name: w.name, 
+        startTime: w.startTime, 
+        endTime: w.endTime,
+        date: w.date 
+      })));
+      
       return workouts
         .filter(workout => workout.planId === currentPlan.planID) // Only show workouts from current plan
         .map(workout => {
@@ -531,6 +541,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
         // Parse stored time strings to actual Date objects
         const startTime = parseTimeToDate(workout.startTime, workoutDate);
         const endTime = parseTimeToDate(workout.endTime, workoutDate);
+
+        console.log('DEBUG - Creating event for workout:', {
+          id: workout.id,
+          name: workout.name,
+          startTime: workout.startTime,
+          endTime: workout.endTime,
+          parsedStart: startTime,
+          parsedEnd: endTime
+        });
 
         return {
           title: workout.name,
@@ -547,25 +566,38 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
  
   const parseTimeToDate = (timeString: string, date: Date): Date => {
+    console.log('DEBUG - parseTimeToDate input:', { timeString, date });
+    
     // Handle empty or undefined time strings
     if (!timeString || timeString.trim() === '') {
+      console.log('DEBUG - parseTimeToDate: empty timeString, returning date as-is');
       return date;
     }
     
-    const [time, period] = timeString.split(' ');
+    // Handle both regular spaces and non-breaking spaces
+    const parts = timeString.split(/[\s\u00A0]/);
+    const time = parts[0];
+    const period = parts[1];
+    
+    console.log('DEBUG - parseTimeToDate split:', { time, period, parts });
     
     if (!time || !period) {
+      console.log('DEBUG - parseTimeToDate: invalid time format, returning date as-is');
       return date;
     }
     
     const [hours, minutes] = time.split(':').map(Number);
+    console.log('DEBUG - parseTimeToDate hours/minutes:', { hours, minutes });
     
     let hour24 = hours;
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
+    console.log('DEBUG - parseTimeToDate hour24:', hour24);
+    
     const result = new Date(date);
     result.setHours(hour24, minutes, 0, 0);
+    console.log('DEBUG - parseTimeToDate result:', result);
     return result;
   };
 

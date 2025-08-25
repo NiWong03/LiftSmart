@@ -2,7 +2,7 @@ import EventDetailCard from '@/components/EventDetailCard';
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import { useWorkout } from '@/components/plans/WorkoutContext';
 import { ThemedView } from '@/components/ThemedView';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { Calendar } from 'react-native-big-calendar';
 import { Button, Divider, Menu, useTheme } from 'react-native-paper';
@@ -10,7 +10,7 @@ import { Button, Divider, Menu, useTheme } from 'react-native-paper';
 const Schedule: React.FC = () => {  
   const { colors } = useTheme();
   const { height: screenHeight } = Dimensions.get('window');
-  const { events, addEvent, getWorkoutEvents } = useWorkout();
+  const { events, addEvent, getWorkoutEvents, workouts } = useWorkout();
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'day'>('week');
   const [menuVisible, setMenuVisible] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -28,7 +28,12 @@ const Schedule: React.FC = () => {
   const allEvents = useMemo(() => {
     const workoutEvents = getWorkoutEvents();
     return [...events, ...workoutEvents];
-  }, [events, getWorkoutEvents]);
+  }, [events, getWorkoutEvents, workouts]);
+
+  // Force calendar refresh when workouts change
+  useEffect(() => {
+    setCalendarKey(prev => prev + 1);
+  }, [workouts]);
 
   const calendarTheme = {
     palette: {
@@ -84,6 +89,7 @@ const Schedule: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<{ title: string; start: Date; end: Date } | null>(null)
   const [isDetailVisible, setIsDetailVisible] = useState(false)
+  const [calendarKey, setCalendarKey] = useState(0)
 
   const getViewModeLabel = () => {
     switch (viewMode) {
@@ -159,30 +165,31 @@ const Schedule: React.FC = () => {
         </Menu>
       </View>
 
-      <Calendar
-        onPressCell={(date) => {
-          const fullMonthName = date.toLocaleDateString('default', {month: 'long'})
-          
-          setIsModalVisible(true);
-          
-          
-        }}
-        events={allEvents}
-        height={screenHeight-120}
-        onPressEvent={(event) => {
-          // react-native-big-calendar passes event object
-          setSelectedEvent(event as { title: string; start: Date; end: Date });
-          setIsDetailVisible(true);
-        }}
-        ampm={true}
-        hourRowHeight={Math.max(40, screenHeight * 0.08)}
-        mode={viewMode}
-        theme={calendarTheme}
-        onSwipeEnd={(date) => {
-          setCurrentDate(date);
-        }}
-        scrollOffsetMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
-      />
+                           <Calendar
+          key={`calendar-${calendarKey}`}
+         onPressCell={(date) => {
+           const fullMonthName = date.toLocaleDateString('default', {month: 'long'})
+           
+           setIsModalVisible(true);
+           
+           
+         }}
+         events={allEvents}
+         height={screenHeight-120}
+         onPressEvent={(event) => {
+           // react-native-big-calendar passes event object
+           setSelectedEvent(event as { title: string; start: Date; end: Date });
+           setIsDetailVisible(true);
+         }}
+         ampm={true}
+         hourRowHeight={Math.max(40, screenHeight * 0.08)}
+         mode={viewMode}
+         theme={calendarTheme}
+         onSwipeEnd={(date) => {
+           setCurrentDate(date);
+         }}
+         scrollOffsetMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
+       />
 
       <AddWorkoutModal
         visible={isModalVisible}
