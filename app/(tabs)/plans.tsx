@@ -19,7 +19,6 @@ const PlansScreen = () => {
   
   const [selectedEmoji, setSelectedEmoji] = useState(currentPlan.emoji);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -46,27 +45,6 @@ const PlansScreen = () => {
       });
     }
   }, [showAddPlan]);
-  
-  useEffect(
-    () => {
-      
-      // 
-      const now = new Date();
-      const chosenWorkout = workouts
-        .filter(w => {
-          const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : new Date(w.date);
-          return workoutDate > now && 
-                 workoutDate.getDate() === now.getDate() && 
-                 w.completed === false;
-        })
-        .sort((a,b) => {
-          const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
-          const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
-          return dateA.getTime() - dateB.getTime();
-        })[0]
-      setUpcomingWorkout(chosenWorkout)
-    }
-  , [workouts])
 
   const handleEmojiSelect = (emoji: string) => {
     setSelectedEmoji(emoji);
