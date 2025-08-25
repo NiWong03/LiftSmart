@@ -374,7 +374,7 @@ export default function EditWorkoutModal({
                     id={idx}
                     title={ex.name}
                         subtitle={Array.isArray(ex.sets) ? ex.sets
-                        .map((s: any) => {
+                        .map((s: any, setIndex: number) => {
                           // Handle both array and object formats
                           let reps = 0, weight = '', time = 0, rest = 0;
                           
@@ -391,9 +391,10 @@ export default function EditWorkoutModal({
                           const weightStr = weight ? `${weight}` : '';
                           const timeStr = time > 0 ? `${time} sec` : '';
                           const restStr = rest > 0 ? `${rest} sec rest` : '';
-                          return [repsStr, weightStr, timeStr, restStr].filter(Boolean).join(' x ');
+                          const setDetails = [repsStr, weightStr, timeStr, restStr].filter(Boolean).join(' x ');
+                          return `Set ${setIndex + 1}: ${setDetails}`;
                         })
-                        .join(', ') : 'No sets defined'}
+                        .join('\n') : 'No sets defined'}
                     details={ex.description || undefined}
                     onDelete={() => {
                       const updated = (editedWorkout.exercises_list || []).filter((_, i) => i !== idx);
