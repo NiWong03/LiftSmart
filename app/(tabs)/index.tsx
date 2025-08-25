@@ -13,7 +13,7 @@ import { Avatar, Button, Chip, IconButton, Surface, Text, useTheme } from 'react
 
 const HomeScreen = () => {
   const theme = useTheme();
-  const { currentPlan, workouts, addPlan } = useWorkout();
+  const { currentPlan, workouts, addPlan, allPlans } = useWorkout();
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const [chatbotVisible, setChatbotVisible] = useState(false);
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
@@ -78,9 +78,13 @@ const HomeScreen = () => {
         date: (() => {
           const dateStr = typeof w.date === 'string' ? w.date : w.date?.toString?.() || '';
           if (dateStr) {
+            console.log('Parsing date:', dateStr, 'for workout:', w.name);
             // Parse date in local timezone to avoid UTC conversion issues
             const [year, month, day] = dateStr.split('-').map(Number);
-            return new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+            // Create date directly in local timezone
+            const parsedDate = new Date(year, month - 1, day);
+            console.log('Parsed date:', parsedDate.toISOString(), 'Day of week:', parsedDate.toLocaleDateString('en-US', { weekday: 'long' }));
+            return parsedDate;
           }
           return new Date();
         })(),
@@ -125,80 +129,106 @@ const HomeScreen = () => {
             </Text>
           </View>
 
-          {/* Quick Stats */}
-          <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={styles.workoutDetails}>
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  7
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Day Streak
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  12
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Workouts
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                  85%
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  Goal Progress
-                </Text>
-              </View>
-            </View>
-          </Surface>
-
           {/* Current Plan Progress Card */}
-          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={styles.cardContent}>
-              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
-                Current Plan Progress
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                {currentPlan.name} — {currentPlan.workoutsCompleted} of {currentPlan.totalWorkouts} workouts completed
-              </Text>
-              {/* Progress Bar Background */}
-              <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.onSurface + '30' }]}>
-                {/* Progress Bar Fill */}
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    { 
-                      backgroundColor: theme.colors.primary,
-                      width: `${(currentPlan.workoutsCompleted / currentPlan.totalWorkouts) * 100}%`,
-                    }
-                  ]}
-                />
+          {allPlans.length > 0 ? (
+            <>
+              {/* Quick Stats */}
+              <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+                <View style={styles.workoutDetails}>
+                  <View style={styles.statItem}>
+                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      7
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Day Streak
+                    </Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      12
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Workouts
+                    </Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      85%
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                      Goal Progress
+                    </Text>
+                  </View>
+                </View>
+              </Surface>
+
+              <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+                <View style={styles.cardContent}>
+                  <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
+                    Current Plan Progress
+                  </Text>
+                  <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                    {currentPlan.name} — {currentPlan.workoutsCompleted} of {currentPlan.totalWorkouts} workouts completed
+                  </Text>
+                  {/* Progress Bar Background */}
+                  <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.onSurface + '30' }]}>
+                    {/* Progress Bar Fill */}
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        { 
+                          backgroundColor: theme.colors.primary,
+                          width: `${(currentPlan.workoutsCompleted / currentPlan.totalWorkouts) * 100}%`,
+                        }
+                      ]}
+                    />
+                  </View>
+                </View>
+              </Surface>
+            </>
+          ) : (
+            <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+              <View style={styles.cardContent}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
+                  No Plans Scheduled
+                </Text>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                  Create your first workout plan to get started on your fitness journey!
+                </Text>
+                <Button
+                  mode="contained"
+                  onPress={() => setChatbotVisible(true)}
+                  style={styles.primaryButton}
+                  contentStyle={styles.buttonContent}
+                  icon="plus"
+                >
+                  Create Plan
+                </Button>
               </View>
-            </View>
-          </Surface>
+            </Surface>
+          )}
 
           {/* Current Plan Card */}
-          <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-            <View style={styles.cardContent}>
-              <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 8 }}>
-                Current Plan
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Name: {currentPlan.name}
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Duration: {currentPlan.duration}
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                Difficulty: {currentPlan.difficulty}
-              </Text>
-            </View>
-          </Surface>
+          {allPlans.length > 0 ? (
+            <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
+              <View style={styles.cardContent}>
+                <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 8 }}>
+                  Current Plan
+                </Text>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Name: {currentPlan.name}
+                </Text>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Duration: {currentPlan.duration}
+                </Text>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Difficulty: {currentPlan.difficulty}
+                </Text>
+              </View>
+            </Surface>
+          ) : null}
 
           {/* Today's Workout Card */}
           <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
@@ -206,21 +236,24 @@ const HomeScreen = () => {
               <View style={styles.cardHeader}>
                 <View>
                   <Text variant="titleLarge" style={{ color: '#666666', fontWeight: 'bold' }}>
-                    Today's Focus
+                    {allPlans.length > 0 ? "Today's Focus" : "Get Started"}
                   </Text>
                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                    {upcomingWorkout ? upcomingWorkout.name : 'No workout scheduled for today'}
+                    {allPlans.length > 0 
+                      ? (upcomingWorkout ? upcomingWorkout.name : 'No workout scheduled for today')
+                      : 'Want to create your own custom plan?'
+                    }
                   </Text>
                 </View>
                 <Avatar.Icon
                   size={48}
-                  icon="dumbbell"
+                  icon={allPlans.length > 0 ? "dumbbell" : "pencil"}
                   style={{ borderRadius: 12, backgroundColor: theme.colors.primaryContainer }}
                   color={theme.colors.onPrimaryContainer}
                 />
               </View>
 
-              {upcomingWorkout ? (
+              {allPlans.length > 0 && upcomingWorkout ? (
                 <>
                   {/* Workout details */}
                   <View style={styles.workoutDetails}>
@@ -258,15 +291,27 @@ const HomeScreen = () => {
                     </Button>
                   </View>
                 </>
-              ) : (
+              ) : allPlans.length > 0 ? (
                 <View style={styles.cardActions}>
                   <Button
                     mode="contained"
-                    onPress={() => console.log('Navigate to add workout screen')}
+                    onPress={() => setChatbotVisible(true)}
                     style={styles.primaryButton}
                     contentStyle={styles.buttonContent}
                   >
                     Add a Workout
+                  </Button>
+                </View>
+              ) : (
+                <View style={styles.cardActions}>
+                  <Button
+                    mode="contained"
+                    onPress={() => router.push('/(tabs)/plans')}
+                    style={styles.primaryButton}
+                    contentStyle={styles.buttonContent}
+                    icon="pencil"
+                  >
+                    Create Manual Plan
                   </Button>
                 </View>
               )}
@@ -554,14 +599,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   progressBarBackground: {
-  height: 12,
-  borderRadius: 8,
-  overflow: 'hidden',
-  width: '100%',
-  marginBottom: 12,
-},
-progressBarFill: {
-  height: '100%',
-  borderRadius: 8,
-},
+    height: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+    width: '100%',
+    marginBottom: 12,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 8,
+  },
 });

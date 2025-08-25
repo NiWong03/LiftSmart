@@ -142,7 +142,7 @@ const PlansScreen = () => {
           {/* Plans List */}
           {allPlans.length > 0 && <AllPlansCard />}
 
-          <Card style={[styles.workoutCard, {marginBottom: -2,}]} mode="outlined">
+          <Card style={[styles.workoutCard, {marginBottom: 20,}]} mode="outlined">
             <TouchableOpacity onPress={() => setShowAddPlan(true)} style={[styles.addWorkoutContent, {marginTop: -16}]}>
               <IconButton
                 icon="plus-circle-outline"

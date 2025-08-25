@@ -249,8 +249,52 @@ IMPORTANT:
 - Provide specific, actionable advice when possible
 - Use a friendly, supportive tone`;
         } else {
-                     // For new plans
-           systemPrompt = `Create a comprehensive workout plan that spans the FULL requested duration with progressive overload and variety.
+          // For new plans
+          
+          // Calculate the exact dates for debugging
+          const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const targetDays = [1, 3, 5, 6]; // Monday, Wednesday, Friday, Saturday (0-indexed)
+          
+          console.log('DEBUG: Tomorrow is:', tomorrow.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+          console.log('DEBUG: Tomorrow day index:', tomorrow.getDay());
+          console.log('DEBUG: Target days:', targetDays);
+          
+          const nextDates = targetDays.map(targetDay => {
+            let currentDate = new Date(tomorrow);
+            console.log('DEBUG: Starting with date:', currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), 'Looking for day:', dayNames[targetDay]);
+            
+                         // If tomorrow is already the target day, use it
+             if (currentDate.getDay() === targetDay) {
+               const result = {
+                 day: dayNames[targetDay],
+                 date: currentDate.getFullYear() + '-' + 
+                       String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(currentDate.getDate()).padStart(2, '0')
+               };
+               console.log('DEBUG: Tomorrow is already', dayNames[targetDay], ':', result);
+               return result;
+             }
+            
+            // Otherwise, find the next occurrence
+            while (currentDate.getDay() !== targetDay) {
+              currentDate.setDate(currentDate.getDate() + 1);
+              console.log('DEBUG: Incremented to:', currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+            }
+            
+                         const result = {
+               day: dayNames[targetDay],
+               date: currentDate.getFullYear() + '-' + 
+                     String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(currentDate.getDate()).padStart(2, '0')
+             };
+            console.log('DEBUG: Final result for', dayNames[targetDay], ':', result);
+            return result;
+          });
+          
+          const exactDatesString = nextDates.map(d => `"${d.day}": "${d.date}"`).join(',\n');
+          
+          systemPrompt = `Create a comprehensive workout plan that spans the FULL requested duration with progressive overload and variety.
 
 CRITICAL REQUIREMENTS:
 - Create workouts for the ENTIRE requested duration (e.g., 6 weeks = 6 weeks of workouts, not just 1 week)
@@ -329,18 +373,34 @@ RULES:
 - CRITICAL: Generate the COMPLETE plan with ALL workouts - do not truncate the response
 - If the plan is long, ensure you complete ALL weeks before ending the JSON
 
-Current date: ${new Date().toISOString().split('T')[0]}
+CURRENT DATE INFORMATION:
+Today is: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Today's date: ${new Date().toISOString().split('T')[0]}
+Tomorrow is: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Tomorrow's date: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
 
-SCHEDULE CALCULATION:
-Tomorrow is: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long' })}
+*** MANDATORY EXACT DATES FOR DEFAULT SCHEDULE - DO NOT CHANGE THESE ***
+${exactDatesString}
+
+*** CRITICAL INSTRUCTIONS ***
+- These dates are pre-calculated and 100% correct
+- You MUST use these exact dates for the default schedule
+- Do NOT recalculate, modify, or change these dates in any way
+- Copy the dates exactly as shown above
+- If you recalculate these dates, you will be wrong
 
 DEFAULT SCHEDULE (if user doesn't specify days):
 - Use Monday, Wednesday, Friday, Saturday
+- Use ONLY the exact dates provided above
+- Copy the dates exactly as shown
+- Do not recalculate, modify, or change these dates in any way
+
+IMPORTANT: The dates above are pre-calculated and correct. Do NOT recalculate them. Use them exactly as provided.
 
 CUSTOM SCHEDULE (if user specifies days):
 - Use the exact days the user mentions
-- Start from tomorrow and follow the user's specified pattern`;
+- Calculate the exact dates for these specific days starting from tomorrow
+- Verify each calculated date falls on the correct day`;
         }
 
         const response2 = await openai.chat.completions.create({

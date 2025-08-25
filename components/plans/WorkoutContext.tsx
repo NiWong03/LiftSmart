@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/firebaseAuth/FirebaseConfig';
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 
@@ -545,6 +545,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
         };
       });
     };
+
+
 
  
   const parseTimeToDate = (timeString: string, date: Date): Date => {
