@@ -345,11 +345,71 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
   const markWorkoutComplete = async (workoutId: string): Promise<void> => {
-    await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), { completed: true });
+    // Find the workout to get its planId
+    const workout = workouts.find(w => w.id === workoutId);
+    if (workout && workout.planId) {
+      // Count completed workouts for this plan (including the one we're about to mark as complete)
+      const planWorkouts = workouts.filter(w => w.planId === workout.planId);
+      const completedCount = planWorkouts.filter(w => w.completed || w.id === workoutId).length;
+      
+      // Update the workout's completed status
+      await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), { completed: true });
+      
+      // Update the plan's workoutsCompleted count
+      await updateDoc(doc(FIREBASE_DB, 'plans', workout.planId), { 
+        workoutsCompleted: completedCount 
+      });
+      
+      // Update local state for the plan
+      setAllPlans(prevPlans => 
+        prevPlans.map(plan => 
+          plan.planID === workout.planId 
+            ? { ...plan, workoutsCompleted: completedCount }
+            : plan
+        )
+      );
+      
+      // Update currentPlan if it's the one being updated
+      setCurrentPlan(prev => 
+        prev.planID === workout.planId 
+          ? { ...prev, workoutsCompleted: completedCount }
+          : prev
+      );
+    }
   };
 
   const markWorkoutIncomplete = async (workoutId: string): Promise<void> => {
-    await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), { completed: false });
+    // Find the workout to get its planId
+    const workout = workouts.find(w => w.id === workoutId);
+    if (workout && workout.planId) {
+      // Count completed workouts for this plan (excluding the one we're about to mark as incomplete)
+      const planWorkouts = workouts.filter(w => w.planId === workout.planId);
+      const completedCount = planWorkouts.filter(w => w.completed && w.id !== workoutId).length;
+      
+      // Update the workout's completed status
+      await updateDoc(doc(FIREBASE_DB, 'workouts', workoutId), { completed: false });
+      
+      // Update the plan's workoutsCompleted count
+      await updateDoc(doc(FIREBASE_DB, 'plans', workout.planId), { 
+        workoutsCompleted: completedCount 
+      });
+      
+      // Update local state for the plan
+      setAllPlans(prevPlans => 
+        prevPlans.map(plan => 
+          plan.planID === workout.planId 
+            ? { ...plan, workoutsCompleted: completedCount }
+            : plan
+        )
+      );
+      
+      // Update currentPlan if it's the one being updated
+      setCurrentPlan(prev => 
+        prev.planID === workout.planId 
+          ? { ...prev, workoutsCompleted: completedCount }
+          : prev
+      );
+    }
   };
 
   const updatePlan = async (planUpdate: Partial<WorkoutPlan> & { planID?: string }): Promise<void> => {
