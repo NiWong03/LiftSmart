@@ -367,6 +367,14 @@ RULES:
 - Set dates sequentially starting from TOMORROW (not today)
 - Set ALL workout times to "1:00 PM" by default
 - For sets: [reps, weight, time, rest] format
+- SET REQUIREMENTS: Each exercise must have 3-4 sets (not just 1 set)
+- SET REQUIREMENTS: For strength exercises: 3-4 sets of 8-12 reps
+- SET REQUIREMENTS: For endurance exercises: 3-4 sets of 12-15 reps
+- SET REQUIREMENTS: For power exercises: 3-4 sets of 5-8 reps
+- WEIGHT FORMATTING: Use actual pound values (e.g., "50 lbs", "100 lbs", "25 lbs") for weighted exercises
+- WEIGHT FORMATTING: Use "bodyweight" only for exercises that don't require equipment (push-ups, pull-ups, squats, etc.)
+- WEIGHT FORMATTING: NEVER use descriptive terms like "moderate", "light", "heavy", "easy", "hard" for weights
+- WEIGHT FORMATTING: For beginners, start with lighter weights (10-30 lbs) and progress to heavier weights (40-100+ lbs)
 - Valid JSON only, no markdown, no comments, no trailing commas
 - Return ONLY the JSON object, no additional text or explanations
 - Do not include any placeholder text like "// Week 2-6 workouts would continue..."
