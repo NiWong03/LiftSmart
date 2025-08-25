@@ -78,12 +78,12 @@ const HomeScreen = () => {
         date: (() => {
           const dateStr = typeof w.date === 'string' ? w.date : w.date?.toString?.() || '';
           if (dateStr) {
-            console.log('Parsing date:', dateStr, 'for workout:', w.name);
+            
             // Parse date in local timezone to avoid UTC conversion issues
             const [year, month, day] = dateStr.split('-').map(Number);
             // Create date directly in local timezone
             const parsedDate = new Date(year, month - 1, day);
-            console.log('Parsed date:', parsedDate.toISOString(), 'Day of week:', parsedDate.toLocaleDateString('en-US', { weekday: 'long' }));
+            
             return parsedDate;
           }
           return new Date();

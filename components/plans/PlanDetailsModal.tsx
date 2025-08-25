@@ -89,11 +89,6 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
   const handleSubmitWorkout = async () => {
     if (!newWorkout.name.trim()) return;
 
-    console.log('Adding workout to existing plan:', {
-      name: newWorkout.name,
-      exercises_count: newWorkout.exercises_list.length,
-      planId: updatedPlan.planID
-    });
 
     // Convert 24-hour format to 12-hour format
     const convertTo12Hour = (time24: string) => {
@@ -125,17 +120,10 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
       })) || []
     };
 
-    console.log('Created workout object:', {
-      name: workout.name,
-      exercises: workout.exercises,
-      startTime: workout.startTime,
-      endTime: workout.endTime,
-      exercises_list_length: workout.exercises_list?.length || 0
-    });
 
     try {
       await addWorkout(workout, updatedPlan.planID); // Pass the plan ID
-      console.log('Workout added to Firebase successfully');
+      
       setShowAddWorkout(false);
       resetForm();
     } catch (error) {
@@ -145,14 +133,14 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
 
   // Handle plan deletion
   const handlePlanDeleted = () => {
-    console.log('Plan deleted, closing modal');
+    
     setShowEditPlan(false);
     onDismiss();
   };
 
   const handleDelete = async () => {
     try {
-      console.log('Starting plan deletion for:', updatedPlan.planID);
+      
       
       // Close the confirmation dialog but keep modal open
       setShowDeleteConfirm(false);
@@ -162,7 +150,7 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
       
       // Delete all workouts associated with this plan
       const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
-      console.log('Deleting', planWorkouts.length, 'workouts associated with plan');
+      
       
       for (const workout of planWorkouts) {
         await deleteWorkout(workout.id);
@@ -171,7 +159,7 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
       // Delete the plan itself
       await deletePlan(updatedPlan.planID);
       
-      console.log('Plan and associated workouts deleted successfully');
+      
     } catch (error) {
       console.error('Error deleting plan:', error);
     }
@@ -285,7 +273,7 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
               plan={updatedPlan}
               onDismiss={() => setShowEditPlan(false)}
               onUpdate={(updatedPlan) => {
-                console.log('Plan updated:', updatedPlan);
+                
                 setShowEditPlan(false);
               }}
             />

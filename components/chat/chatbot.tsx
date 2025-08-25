@@ -123,6 +123,9 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading) return;
 
+    const messageToSend = inputText.trim();
+    console.log('Sending message:', messageToSend);
+
     // Clear any existing edit suggestions when user sends a new message
     setHasEditSuggestions(false);
     setHasDraftPlan(false);
@@ -131,15 +134,14 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     const userMessage: Message = {
         id: Date.now().toString(),
         role: 'user',
-        content: inputText.trim(),
+        content: messageToSend,
         timestamp: new Date(),
       };
-    console.log('Sending message:', inputText);
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
     // Determine the type of request
-    const inputLower = inputText.toLowerCase();
+    const inputLower = messageToSend.toLowerCase();
     
     // Keywords for different types of requests
     const editKeywords = ['edit', 'change', 'modify', 'update', 'adjust', 'remove', 'delete'];
@@ -256,13 +258,11 @@ IMPORTANT:
           const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           const targetDays = [1, 3, 5, 6]; // Monday, Wednesday, Friday, Saturday (0-indexed)
           
-          console.log('DEBUG: Tomorrow is:', tomorrow.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-          console.log('DEBUG: Tomorrow day index:', tomorrow.getDay());
-          console.log('DEBUG: Target days:', targetDays);
+
           
           const nextDates = targetDays.map(targetDay => {
             let currentDate = new Date(tomorrow);
-            console.log('DEBUG: Starting with date:', currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }), 'Looking for day:', dayNames[targetDay]);
+
             
                          // If tomorrow is already the target day, use it
              if (currentDate.getDay() === targetDay) {
@@ -272,14 +272,14 @@ IMPORTANT:
                        String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
                        String(currentDate.getDate()).padStart(2, '0')
                };
-               console.log('DEBUG: Tomorrow is already', dayNames[targetDay], ':', result);
+
                return result;
              }
             
             // Otherwise, find the next occurrence
             while (currentDate.getDay() !== targetDay) {
               currentDate.setDate(currentDate.getDate() + 1);
-              console.log('DEBUG: Incremented to:', currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+
             }
             
                          const result = {
@@ -288,7 +288,7 @@ IMPORTANT:
                      String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
                      String(currentDate.getDate()).padStart(2, '0')
              };
-            console.log('DEBUG: Final result for', dayNames[targetDay], ':', result);
+
             return result;
           });
           
@@ -403,6 +403,7 @@ CUSTOM SCHEDULE (if user specifies days):
 - Verify each calculated date falls on the correct day`;
         }
 
+        console.log("Making API call to OpenAI...");
         const response2 = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -410,10 +411,10 @@ CUSTOM SCHEDULE (if user specifies days):
                     role: "system", 
                     content: systemPrompt
                 },
-                { role: "user", content: inputText.trim() }
+                { role: "user", content: messageToSend }
             ],
         });
-        console.log("AI Response:", response2.choices[0].message.content);
+        console.log("AI Response received:", response2.choices[0].message.content);
 
         try {
                 const responseContent = response2.choices[0].message.content;
@@ -485,7 +486,16 @@ CUSTOM SCHEDULE (if user specifies days):
         }
     } catch (error) {
         console.error("OpenAI Error:", error);
+        // Add error message to chat
+        const errorMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: 'Sorry, I encountered an error. Please try again.',
+            timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
     } finally {
+        console.log("Setting isLoading to false");
         setIsLoading(false);
     }
   };

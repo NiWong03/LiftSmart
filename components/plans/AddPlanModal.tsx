@@ -116,11 +116,6 @@ export default function AddPlanModal({
   const handleAddWorkout = () => {
     if (!newWorkout.name.trim()) return;
 
-    console.log('Creating workout with data:', {
-      name: newWorkout.name,
-      exercises_list: newWorkout.exercises_list,
-      exercises_count: newWorkout.exercises_list.length
-    });
 
     // Convert 24-hour format to 12-hour format
     const convertTo12Hour = (time24: string) => {
@@ -146,14 +141,6 @@ export default function AddPlanModal({
       exercises_list: newWorkout.exercises_list
     };
 
-    console.log('Created workout object:', {
-      name: workoutData.name,
-      exercises: workoutData.exercises,
-      exercises_list: workoutData.exercises_list,
-      exercises_list_length: workoutData.exercises_list?.length || 0,
-      startTime: workoutData.startTime,
-      endTime: workoutData.endTime
-    });
 
     // Update local plan state only
     const updatedWorkouts = [...(localPlan.workouts || []), workoutData];
@@ -162,7 +149,7 @@ export default function AddPlanModal({
       totalWorkouts: updatedWorkouts.length 
     });
     
-    console.log('Updated plan workouts count:', updatedWorkouts.length);
+    
     
     setShowAddWorkout(false);
     
@@ -328,9 +315,9 @@ export default function AddPlanModal({
                 <Button
                   mode="contained"
                   onPress={() => {
-                    console.log('Submit button pressed in AddPlanModal');
-                    console.log('Current localPlan state:', localPlan);
-                    console.log('Workouts in plan:', localPlan.workouts?.length || 0);
+                    
+                    
+                    
                     onSubmit(localPlan);
                   }}
                   style={styles.submitButton}

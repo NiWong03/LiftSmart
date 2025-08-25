@@ -30,26 +30,26 @@ const formatTime12Hour = (date: Date) => {
 const parseTimeToDate = (timeString: string): Date => {
   // Handle invalid or empty time strings
   if (!timeString || typeof timeString !== 'string') {
-    console.log('Invalid time string:', timeString);
+    
     return new Date(); // Return current time as fallback
   }
   
   try {
     const trimmedTime = timeString.trim();
-    console.log('Parsing time string:', `"${trimmedTime}"`);
+    
     
     // Check if it's 24-hour format (e.g., "08:00", "14:30")
     if (trimmedTime.includes(':') && !trimmedTime.includes('AM') && !trimmedTime.includes('PM')) {
       const [hours, minutes] = trimmedTime.split(':').map(Number);
       
       if (isNaN(hours) || isNaN(minutes)) {
-        console.log('Invalid 24-hour format:', timeString);
+        
         return new Date(); // Return current time as fallback
       }
       
       const result = new Date();
       result.setHours(hours, minutes, 0, 0);
-      console.log('Parsed 24-hour format result:', result.toLocaleTimeString());
+      
       return result;
     }
     
@@ -68,7 +68,7 @@ const parseTimeToDate = (timeString: string): Date => {
     } else {
       const spaceIndex = trimmedTime.lastIndexOf(' ');
       if (spaceIndex === -1) {
-        console.log('No AM/PM or space found in time string:', timeString);
+        
         return new Date(); // Return current time as fallback
       }
       
@@ -76,17 +76,17 @@ const parseTimeToDate = (timeString: string): Date => {
       period = trimmedTime.substring(spaceIndex + 1);
     }
     
-    console.log('Extracted time:', time, 'period:', period);
+    
     
     if (!time || !period) {
-      console.log('Malformed time string:', timeString);
+      
       return new Date(); // Return current time as fallback
     }
     
     const [hours, minutes] = time.split(':').map(Number);
     
     if (isNaN(hours) || isNaN(minutes)) {
-      console.log('Invalid hours or minutes:', timeString);
+      
       return new Date(); // Return current time as fallback
     }
     
@@ -96,11 +96,38 @@ const parseTimeToDate = (timeString: string): Date => {
     
     const result = new Date();
     result.setHours(hour24, minutes, 0, 0);
-    console.log('Parsed 12-hour format result:', result.toLocaleTimeString());
+    
     return result;
   } catch (error) {
-    console.log('Error parsing time string:', timeString, error);
+    
     return new Date(); // Return current time as fallback
+  }
+};
+
+// Helper function to calculate duration from start and end times
+const calculateDuration = (startTime: string, endTime: string): string => {
+  try {
+    const startDate = parseTimeToDate(startTime);
+    const endDate = parseTimeToDate(endTime);
+    
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const diffMinutes = Math.round(diffMs / (1000 * 60));
+    
+    if (diffMinutes <= 0) {
+      return '0 min';
+    }
+    
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    } else {
+      return `${minutes}m`;
+    }
+  } catch (error) {
+    
+    return '0 min';
   }
 };
 
@@ -122,19 +149,29 @@ export default function EditWorkoutModal({
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [timeError, setTimeError] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (workout.date instanceof Date) {
+      return workout.date;
+    } else if (workout.date && typeof workout.date === 'object' && 'toDate' in workout.date) {
+      return workout.date.toDate();
+    } else {
+      return new Date();
+    }
+  });
 
   // Update local state when workout prop changes
   useEffect(() => {
-    console.log('EditWorkoutModal - workout times:', {
-      startTime: workout.startTime,
-      endTime: workout.endTime,
-      startTimeType: typeof workout.startTime,
-      endTimeType: typeof workout.endTime
-    });
     
     setEditedWorkout(workout);
     setStartTime(parseTimeToDate(workout.startTime));
     setEndTime(parseTimeToDate(workout.endTime));
+    
+    // Update current date
+    if (workout.date instanceof Date) {
+      setCurrentDate(workout.date);
+    } else if (workout.date && typeof workout.date === 'object' && 'toDate' in workout.date) {
+      setCurrentDate(workout.date.toDate());
+    }
   }, [workout]);
 
   // Validation function
@@ -154,7 +191,12 @@ export default function EditWorkoutModal({
     const currentTime = selectedTime || startTime;
     setShowStartPicker(false);
     setStartTime(currentTime);
-    updateWorkout({ startTime: formatTime12Hour(currentTime) });
+    const newStartTime = formatTime12Hour(currentTime);
+    const newDuration = calculateDuration(newStartTime, editedWorkout.endTime || workout.endTime);
+    updateWorkout({ 
+      startTime: newStartTime,
+      duration: newDuration
+    });
     validateTimes(currentTime, endTime);
   };
 
@@ -163,19 +205,25 @@ export default function EditWorkoutModal({
     const currentTime = selectedTime || endTime;
     setShowEndPicker(false);
     setEndTime(currentTime);
-    updateWorkout({ endTime: formatTime12Hour(currentTime) });
+    const newEndTime = formatTime12Hour(currentTime);
+    const newDuration = calculateDuration(editedWorkout.startTime || workout.startTime, newEndTime);
+    updateWorkout({ 
+      endTime: newEndTime,
+      duration: newDuration
+    });
     validateTimes(startTime, currentTime);
   };
 
   // Date picker
   const onChangeDate = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || new Date();
+    const selectedDateValue = selectedDate || new Date();
     setShowDatePicker(false);
+    setCurrentDate(selectedDateValue);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayOfWeek = dayNames[currentDate.getDay()];
+    const dayOfWeek = dayNames[selectedDateValue.getDay()];
     updateWorkout({ 
       day: dayOfWeek,
-      date: currentDate
+      date: selectedDateValue
     });
   };
 
@@ -185,8 +233,9 @@ export default function EditWorkoutModal({
 
   const handleSubmit = () => {
     if (!timeError) {
-      console.log('Submitting edited workout:', editedWorkout);
-      console.log('Original workout:', workout);
+      
+      
+      
       onSubmit(editedWorkout);
     }
   };
@@ -245,7 +294,7 @@ export default function EditWorkoutModal({
                 
                 {showDatePicker && (
                   <DateTimePicker
-                    value={new Date()}
+                    value={currentDate}
                     mode="date"
                     display="spinner"
                     onChange={onChangeDate}
@@ -269,28 +318,33 @@ export default function EditWorkoutModal({
                 )}
               </View>
 
-              {/* End Time */}
-              <View style={styles.formField}>
-                <Button onPress={() => setShowEndPicker(true)} mode="outlined">
-                  End Time: {formatTime12Hour(endTime)}
-                </Button>
-                
-                {showEndPicker && (
-                  <DateTimePicker
-                    value={endTime}
-                    mode="time"
-                    is24Hour={false}
-                    display="spinner"
-                    onChange={onChangeEndTime}
-                  />
-                )}
-                
-                {timeError && (
-                  <Text style={styles.errorText}>
-                    *End time cannot be before start time*
-                  </Text>
-                )}
-              </View>
+                             {/* End Time */}
+               <View style={styles.formField}>
+                 <Button onPress={() => setShowEndPicker(true)} mode="outlined">
+                   End Time: {formatTime12Hour(endTime)}
+                 </Button>
+                 
+                 {showEndPicker && (
+                   <DateTimePicker
+                     value={endTime}
+                     mode="time"
+                     is24Hour={false}
+                     display="spinner"
+                     onChange={onChangeEndTime}
+                   />
+                 )}
+                 
+                 {timeError && (
+                   <Text style={styles.errorText}>
+                     *End time cannot be before start time*
+                   </Text>
+                 )}
+                 
+                 {/* Duration Display */}
+                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }}>
+                   Duration: {editedWorkout.duration || calculateDuration(workout.startTime, workout.endTime)}
+                 </Text>
+               </View>
 
               {/* Exercises */}
               <View style={styles.formField}>

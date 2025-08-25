@@ -162,7 +162,7 @@ const Schedule: React.FC = () => {
       <Calendar
         onPressCell={(date) => {
           const fullMonthName = date.toLocaleDateString('default', {month: 'long'})
-          console.log('you pressed:', fullMonthName, date.getDate(), "at", date.getHours());
+          
           setIsModalVisible(true);
           
           

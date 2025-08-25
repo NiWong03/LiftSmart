@@ -102,8 +102,6 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   const currentUser = FIREBASE_AUTH.currentUser;
   const userId = currentUser?.uid;
   
-  // console.log('WorkoutProvider - currentUser:', currentUser);
-  // console.log('WorkoutProvider - userId:', userId);
 
    const [workouts, setWorkouts] = useState<Workout[]>([]);
 
@@ -127,9 +125,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
   // ==================== FIRESTORE DATA LOADING ====================
   useEffect(() => {
-    // console.log('useEffect running, userId:', userId);
+    // 
     if (!userId) {
-      console.log('No user logged in');
+      
       return;
     }
 
@@ -173,13 +171,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       where('userId', '==', userId)
     );
 
-    // console.log('Setting up Firestore listener for workouts, userId:', userId);
-    // console.log('Query:', workoutsQuery);
     
         // stops listening to prevent memory leakes
     const removeListener = onSnapshot(workoutsQuery, 
       (snapshot) => {
-        // console.log('Firestore listener triggered, snapshot size:', snapshot.size);
+
         if (snapshot.empty) {
           setWorkouts([]);
           return; 
@@ -199,7 +195,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
             difficulty: data.difficulty || '',
             userId: data.userId || '',
             planId: data.planId || '', // Include planId field
-            date: data.date?.toDate ? data.date.toDate() : new Date(data.date), // Convert Firestore timestamp to Date
+            date: data.date?.toDate ? data.date.toDate() : 
+                  data.date instanceof Date ? data.date : new Date(data.date), // Convert Firestore timestamp to Date
             // Ensure exercises_list is properly structured
             exercises_list: data.exercises_list?.map((exercise: any) => ({
               name: exercise.name || '',
@@ -218,18 +215,13 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
           } as Workout;
         });
         
-        // console.log('Loaded workouts from Firestore:', firestoreWorkouts);
-        //  console.log('Previous workouts state:', workouts);
-        //  console.log('Setting workouts state with:', firestoreWorkouts.length, 'workouts');
+
+
+
          
          // Debug time values
          firestoreWorkouts.forEach(workout => {
-           console.log(`Workout ${workout.id} times:`, {
-             startTime: workout.startTime,
-             endTime: workout.endTime,
-             startTimeType: typeof workout.startTime,
-             endTimeType: typeof workout.endTime
-           });
+           // Time values are now properly handled
          });
          setWorkouts(firestoreWorkouts);
          setLoading(false);
@@ -294,36 +286,51 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       cleanUpdates.exercises = updates.exercises_list.length;
     }
     
+
+
     // Update local state immediately for instant UI feedback
     setWorkouts(prevWorkouts => 
       prevWorkouts.map(workout => 
         workout.id === workoutId 
           ? { 
               ...workout, 
-              ...updates,
-              // Ensure exercises count is updated in local state too
-              exercises: updates.exercises_list ? updates.exercises_list.length : workout.exercises
+              // Only update specific fields, ensuring date is always a Date object
+              ...(updates.startTime && { startTime: updates.startTime }),
+              ...(updates.endTime && { endTime: updates.endTime }),
+              ...(updates.duration && { duration: updates.duration }),
+              ...(updates.name && { name: updates.name }),
+              ...(updates.day && { day: updates.day }),
+              ...(updates.completed !== undefined && { completed: updates.completed }),
+              ...(updates.difficulty && { difficulty: updates.difficulty }),
+              ...(updates.exercises_list && { exercises_list: updates.exercises_list }),
+              // Handle date conversion explicitly
+              ...(updates.date && { 
+                date: updates.date instanceof Timestamp ? updates.date.toDate() : 
+                      updates.date instanceof Date ? updates.date : new Date(updates.date)
+              }),
+              // Update exercises count if exercises_list is being updated
+              ...(updates.exercises_list && { exercises: updates.exercises_list.length })
             }
           : workout
       )
     );
     
-        console.log('Updating workout:', workoutId, 'with updates:', cleanUpdates);
+
     try {
       // Try to update the document first
       const docRef = doc(FIREBASE_DB, 'workouts', workoutId);
       await updateDoc(docRef, cleanUpdates);
-      console.log('Workout updated successfully in Firestore');
+
     } catch (error: any) {
       // If the document doesn't exist, create it
       if (error.code === 'not-found') {
-        console.log('Document does not exist, creating new workout instead');
+
         const docRef = doc(FIREBASE_DB, 'workouts', workoutId);
         await setDoc(docRef, {
           ...cleanUpdates,
           userId
         });
-        console.log('New workout created in Firestore with existing ID');
+
       } else {
         console.error('Error updating workout in Firestore:', error);
         throw error;
@@ -352,7 +359,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     try {
       // If this plan is being set as current, unset all other plans first
       if (planUpdate.current === true) {
-        console.log('Setting plan as current, unsetting other plans...');
+
         
         // Update all other plans to not be current
         const otherPlans = allPlans.filter(plan => plan.planID !== planId);
@@ -391,7 +398,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
           : prev
       );
       
-      console.log('Plan updated successfully:', planUpdate);
+
     } catch (error) {
       console.error('Error updating plan:', error);
       throw error;
@@ -401,9 +408,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   const addPlan = async (plan: Omit<WorkoutPlan, 'planID'>, workouts?: Workout[]): Promise<void> => {
     if (!userId) throw new Error('No user logged in');
     
-    console.log('addPlan called with:', { plan, workoutsCount: workouts?.length || 0 });
-    console.log('Current userId:', userId);
-    console.log('Current allPlans count:', allPlans.length);
+
+
+
     
     try {
       // Check if this is the first plan - if so, set it as current
@@ -420,18 +427,13 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       const planDocRef = await addDoc(collection(FIREBASE_DB, 'plans'), planData);
       const planId = planDocRef.id;
       
-      console.log('Plan created with ID:', planId, 'isFirstPlan:', isFirstPlan);
+
       
       if (workouts && workouts.length > 0) {
-        console.log('Processing workouts for plan creation...');
+
         
         // Clean workout data to make it Firestore-serializable
         const cleanWorkouts = workouts.map((workout, index) => {
-          console.log(`Processing workout ${index + 1}:`, {
-            name: workout.name,
-            exercisesCount: workout.exercises_list?.length || 0,
-            exercises_list: workout.exercises_list
-          });
           
           const cleanedWorkout = {
             ...workout,
@@ -452,21 +454,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
             })) || []
           };
           
-          console.log(`Cleaned workout ${index + 1}:`, {
-            name: cleanedWorkout.name,
-            exercisesCount: cleanedWorkout.exercises_list?.length || 0,
-            userId: cleanedWorkout.userId,
-            planId: cleanedWorkout.planId
-          });
           
           return cleanedWorkout;
         });
         
-        console.log('Adding workouts to Firestore...');
+
         const workoutPromises = cleanWorkouts.map(async (workout, index) => {
           try {
             const docRef = await addDoc(collection(FIREBASE_DB, 'workouts'), workout);
-            console.log(`Workout ${index + 1} added with ID:`, docRef.id);
+
             return docRef;
           } catch (error) {
             console.error(`Error adding workout ${index + 1}:`, error);
@@ -529,7 +525,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
       return workouts
         .filter(workout => workout.planId === currentPlan.planID) // Only show workouts from current plan
         .map(workout => {
-          const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
+          const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : 
+                             workout.date instanceof Date ? workout.date : new Date(workout.date);
         
         // Parse stored time strings to actual Date objects
         const startTime = parseTimeToDate(workout.startTime, workoutDate);
@@ -550,7 +547,17 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
  
   const parseTimeToDate = (timeString: string, date: Date): Date => {
+    // Handle empty or undefined time strings
+    if (!timeString || timeString.trim() === '') {
+      return date;
+    }
+    
     const [time, period] = timeString.split(' ');
+    
+    if (!time || !period) {
+      return date;
+    }
+    
     const [hours, minutes] = time.split(':').map(Number);
     
     let hour24 = hours;

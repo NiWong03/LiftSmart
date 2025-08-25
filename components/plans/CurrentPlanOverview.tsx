@@ -25,8 +25,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
 
   useEffect(
     () => {
-      console.log(currentPlan.workoutsCompleted)
-      // console.log('Reloading');
+      
       const now = new Date();
       const chosenWorkout = workouts
         .filter(w => {
