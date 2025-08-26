@@ -49,6 +49,8 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   const [typingMessage, setTypingMessage] = useState('');
   const [fullTypingMessage, setFullTypingMessage] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<any>(null);
+  const textRef = useRef(""); // store text here without re-rendering
 
   // Add keyboard listeners
   useEffect(() => {
@@ -120,11 +122,18 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     }
   }, [isTyping, fullTypingMessage]);
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    const sendMessage = async () => {
+    const text = textRef.current.trim();
+    if (!text || isLoading) return;
 
-    const messageToSend = inputText.trim();
+    const messageToSend = text;
     console.log('Sending message:', messageToSend);
+    
+    // Clear the visible input
+    if (inputRef.current) {
+      inputRef.current.clear();
+    }
+    textRef.current = ""; // reset stored text
 
     // Clear any existing edit suggestions when user sends a new message
     setHasEditSuggestions(false);
@@ -138,7 +147,6 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
         timestamp: new Date(),
       };
     setMessages(prev => [...prev, userMessage]);
-    setInputText('');
     setIsLoading(true);
     // Determine the type of request
     const inputLower = messageToSend.toLowerCase();
@@ -426,35 +434,44 @@ CUSTOM SCHEDULE (if user specifies days):
 
         try {
                 const responseContent = response2.choices[0].message.content;
-                if (!responseContent) return;
+                console.log('Response content:', responseContent);
                 
-                                 // Handle different response types
-                 if (isAdviceRequest) {
-                   // For advice requests, start typing animation
-                   setIsTyping(true);
-                   setFullTypingMessage(responseContent);
-                 } else {
-                   // For plan creation/editing, parse JSON
-                   const parsedResponse = JSON.parse(responseContent); 
-                   
-                   // Handle different action types
-                   if (parsedResponse.action === 'edit') {
-                     // Set the new edit suggestions
-                     setHasEditSuggestions(true);
-                     setHasDraftPlan(false);
-                     setStoredEditResponse(parsedResponse);
-                   } else {
-                     // Create new plan (default behavior)
-                     onParsedResponse?.(parsedResponse);
-                     setHasDraftPlan(true);
-                     setHasEditSuggestions(false);
-                   }
-                   
-                   console.log('response parsed!')           
-                   // Start typing animation for the response
-                   setIsTyping(true);
-                   setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
-                 }
+                if (!responseContent) {
+                    console.log('No response content, returning early');
+                    return;
+                }
+                
+                // Handle different response types
+                if (isAdviceRequest) {
+                    console.log('Processing advice request');
+                    // For advice requests, start typing animation
+                    setIsTyping(true);
+                    setFullTypingMessage(responseContent);
+                } else {
+                    console.log('Processing plan/edit request');
+                    // For plan creation/editing, parse JSON
+                    const parsedResponse = JSON.parse(responseContent); 
+                    
+                    // Handle different action types
+                    if (parsedResponse.action === 'edit') {
+                        console.log('Setting edit suggestions');
+                        // Set the new edit suggestions
+                        setHasEditSuggestions(true);
+                        setHasDraftPlan(false);
+                        setStoredEditResponse(parsedResponse);
+                    } else {
+                        console.log('Creating new plan');
+                        // Create new plan (default behavior)
+                        onParsedResponse?.(parsedResponse);
+                        setHasDraftPlan(true);
+                        setHasEditSuggestions(false);
+                    }
+                    
+                    console.log('response parsed!')           
+                    // Start typing animation for the response
+                    setIsTyping(true);
+                    setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
+                }
         } catch (parseError) {
             // If not JSON, use the raw response with typing animation
             console.log('JSON Parse Error:', parseError);
@@ -492,20 +509,20 @@ CUSTOM SCHEDULE (if user specifies days):
                 setFullTypingMessage(responseText || 'Sorry, I couldn\'t generate a response.');
             }
         }
-    } catch (error) {
-        console.error("OpenAI Error:", error);
-        // Add error message to chat
-        const errorMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            role: 'assistant',
-            content: 'Sorry, I encountered an error. Please try again.',
-            timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-    } finally {
-        console.log("Setting isLoading to false");
-        setIsLoading(false);
-    }
+            } catch (error) {
+            console.error("OpenAI Error:", error);
+            // Add error message to chat
+            const errorMessage: Message = {
+                id: (Date.now() + 2).toString(),
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.',
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            console.log("Setting isLoading to false");
+            setIsLoading(false);
+        }
   };
 
   return (
@@ -675,23 +692,30 @@ CUSTOM SCHEDULE (if user specifies days):
 
             {/* Input */}
             <View style={[styles.inputContainer, { borderTopColor: theme.colors.outline }]}>
-              <TextInput
-                mode="outlined"
-                placeholder="Ask your fitness coach..."
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                style={styles.textInput}
-                outlineStyle={{ borderRadius: 24 }}
-                onSubmitEditing={sendMessage}
-              />
+                             <TextInput
+                 ref={inputRef}
+                 mode="outlined"
+                 placeholder="Ask your fitness coach..."
+                 multiline={false}
+                 autoCorrect={true}
+                 autoCapitalize="sentences"
+                 spellCheck={true}
+                 style={styles.textInput}
+                 outlineStyle={{ borderRadius: 24 }}
+                 onSubmitEditing={sendMessage}
+                 blurOnSubmit={false}
+                 returnKeyType="send"
+                 onChangeText={(t) => {
+                   textRef.current = t; // keep latest text without re-rendering
+                 }}
+               />
               <IconButton
                 icon="send"
                 size={24}
                 iconColor={theme.colors.primary}
                 style={[styles.sendButton, { backgroundColor: theme.colors.primaryContainer }]}
                 onPress={sendMessage}
-                disabled={!inputText.trim()}
+                disabled={isLoading}
               />
             </View>
           </KeyboardAvoidingView>
@@ -757,7 +781,8 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    maxHeight: 100,
+    maxHeight: 50,
+    minHeight: 50,
   },
   sendButton: {
     borderRadius: 24,
