@@ -176,6 +176,7 @@ const HomeScreen = () => {
                     Current Plan Progress
                   </Text>
                   <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                    {/* console.log(currentPlan.workoutsCompleted) */}
                     {currentPlan.name} — {currentPlan.workoutsCompleted} of {currentPlan.totalWorkouts} workouts completed
                   </Text>
                   {/* Progress Bar Background */}

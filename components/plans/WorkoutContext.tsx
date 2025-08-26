@@ -343,7 +343,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   const deleteWorkout = async (workoutId: string): Promise<void> => {
     await deleteDoc(doc(FIREBASE_DB, 'workouts', workoutId));
   };
-
+// USED BY SCHEDULE PAGE------------------- 
   const markWorkoutComplete = async (workoutId: string): Promise<void> => {
     // Find the workout to get its planId
     const workout = workouts.find(w => w.id === workoutId);

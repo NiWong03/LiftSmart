@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from '../styles';
-import { Set, Workout } from './WorkoutContext';
+import { Set, Workout, useWorkout } from './WorkoutContext';
 
 export interface ActiveSet {
   exerciseName: string;
@@ -55,6 +55,7 @@ export default function ActiveWorkoutModal({
 }: ActiveWorkoutModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
+  const { markWorkoutComplete } = useWorkout(); // Add this line
   const [showHistory, setShowHistory] = useState(false);
   const [localWorkoutTime, setLocalWorkoutTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -963,6 +964,7 @@ export default function ActiveWorkoutModal({
               duration: formatTime(localWorkoutTime), // Update duration with actual workout time
             };
             onUpdateWorkout(completedWorkout);
+            markWorkoutComplete(activeWorkout.workout.id);
             onClose();
           }}
           icon="stop"
