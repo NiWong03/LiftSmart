@@ -1,9 +1,9 @@
 import { API_KEY } from "@/OpenAI.config";
 import OpenAI from "openai";
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme, ActivityIndicator } from 'react-native-paper';
-import { useWorkout, WorkoutPlan, Workout } from '../plans/WorkoutContext';
+import { ActivityIndicator, IconButton, Modal, Portal, Surface, Text, TextInput, TouchableRipple, useTheme } from 'react-native-paper';
+import { useWorkout } from '../plans/WorkoutContext';
 
 const openai = new OpenAI({
     apiKey: API_KEY,
@@ -703,20 +703,6 @@ CUSTOM SCHEDULE (if user specifies days):
 
 // Keep the original test function
 export const testOpenAI = async () => {
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "user", content: "write a haiku about ai" }
-      ],
-    });
-    
-    console.log("AI Response:", response.choices[0].message.content);
-    return response.choices[0].message.content;
-  } catch (error) {
-    console.error("OpenAI Error:", error);
-    return null;
-  }
 };
 
 const styles = StyleSheet.create({

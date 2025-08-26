@@ -138,38 +138,6 @@ const HomeScreen = () => {
           {/* Current Plan Progress Card */}
           {allPlans.length > 0 ? (
             <>
-              {/* Quick Stats */}
-              <Surface style={[styles.statsContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
-                <View style={styles.workoutDetails}>
-                  <View style={styles.statItem}>
-                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                      7
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Day Streak
-                    </Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                      12
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Workouts
-                    </Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statItem}>
-                    <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                      85%
-                    </Text>
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Goal Progress
-                    </Text>
-                  </View>
-                </View>
-              </Surface>
-
               <Surface style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]} elevation={1}>
                 <View style={styles.cardContent}>
                   <Text variant="titleLarge" style={{ color: theme.colors.primary, fontWeight: 'bold', marginBottom: 12 }}>
