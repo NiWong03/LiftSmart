@@ -191,16 +191,19 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     try { 
         let systemPrompt = '';
         
-        if (isEditRequest && currentPlan.name) {
-          // For edits, include current plan data
-          const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
-          systemPrompt = `You are an AI fitness coach editing an existing workout plan.
+                 if (isEditRequest && currentPlan.name) {
+           // For edits, include current plan data
+           const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
+                       systemPrompt = `You are an AI fitness coach editing an existing workout plan.
+
+You are an AI fitness coach editing an existing workout plan.
 
 RESPONSE FORMAT:
 Return JSON with:
 - "action": "edit"
 - "response": A clear summary of what you're changing
-- "plan": The complete updated plan object (replace the entire plan)
+- "workoutsToUpdate": Array of ONLY the workouts that need changes (not the entire plan)
+- "workoutIds": Array of workout IDs that were modified
 
 CURRENT PLAN TO EDIT:
 ${JSON.stringify({
@@ -221,14 +224,44 @@ ${JSON.stringify({
   }))
 })}
 
+EDITING GUIDELINES:
+- ONLY return workouts that actually need changes
+- If user asks to make the plan "more intense", return ALL workouts with increased weights/reps
+- Keep ALL existing exercise names exactly as they are
+- Only modify weights, reps, or rest times for existing exercises
+- Do NOT change workout names, days, or structure
+- Do NOT add new exercises or change exercise names
+- Return ONLY the workouts that need updates, not the entire plan
+
 RULES:
-- Return the complete updated plan, not just changes
+- Return ONLY the workouts that need changes (not the entire plan)
 - Preserve existing workout IDs
 - Valid JSON only, no markdown
 - Dates: "YYYY-MM-DD" format
 - Time: "h:mm AM/PM" format
 - Sets: arrays in format [reps:number, weight:string, time:number, rest:number]
-- Difficulty: "Easy" | "Medium" | "Hard"`;
+- Difficulty: "Easy" | "Medium" | "Hard"
+- CRITICAL: Sets must be arrays, not objects: [reps, weight, time, rest]
+- CRITICAL: Example: [10, "50 lbs", 0, 60] not {"reps": 10, "weight": "50 lbs"}
+
+EXAMPLE RESPONSE FORMAT:
+{
+  "action": "edit",
+  "response": "Increased weights and reps for all exercises to make the plan more intense",
+  "workoutsToUpdate": [
+    {
+      "id": "workoutId1",
+      "name": "Week 1 - Upper Body Strength",
+      "exercises_list": [
+        {
+          "name": "Bench Press",
+          "sets": [[12, "60 lbs", 0, 60], [10, "65 lbs", 0, 60], [8, "70 lbs", 0, 60]]
+        }
+      ]
+    }
+  ],
+  "workoutIds": ["workoutId1", "workoutId2"]
+}`;
         } else if (isAdviceRequest) {
           // For general fitness advice
           systemPrompt = `You are an experienced fitness coach and personal trainer. Provide helpful, accurate, and motivational fitness advice.
