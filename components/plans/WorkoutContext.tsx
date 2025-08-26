@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/firebaseAuth/FirebaseConfig';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 
@@ -114,7 +114,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     duration: 6,
     progress: "Week 3 of 6",
     workoutsCompleted: 0,
-    totalWorkouts: workouts.length,
+    totalWorkouts: 0, // Start with 0, will be calculated properly
     difficulty: "Difficulty Load",
     emoji: "💪",
     planID: "1",
@@ -122,6 +122,17 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   });
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // update current plan totalWorkouts
+  useEffect(() => {
+    if (currentPlan.planID && workouts.length > 0) {
+      const planWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
+      setCurrentPlan(prev => ({
+        ...prev,
+        totalWorkouts: planWorkouts.length
+      }));
+    }
+  }, [workouts, currentPlan.planID]);
 
   // ==================== FIRESTORE DATA LOADING ====================
   useEffect(() => {
@@ -248,6 +259,14 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     };
     
     await addDoc(collection(FIREBASE_DB, 'workouts'), workoutData);
+    
+    // Update plan on add workout
+    if (planId) {
+      const planWorkouts = workouts.filter(w => w.planId === planId);
+      await updateDoc(doc(FIREBASE_DB, 'plans', planId), {
+        totalWorkouts: planWorkouts.length + 1
+      });
+    }
   };
 
   const updateWorkout = async (workoutId: string, updates: Partial<Workout>): Promise<void> => {
