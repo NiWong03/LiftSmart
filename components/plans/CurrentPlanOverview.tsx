@@ -17,7 +17,7 @@ interface CurrentPlanOverviewProps {
 
 export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: CurrentPlanOverviewProps) {
   const theme = useTheme();
-  const { currentPlan, workouts } = useWorkout();
+  const { currentPlan, workouts, deletingPlans } = useWorkout();
   const styles = createPlanStyles(theme);
   const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const params = useLocalSearchParams();
@@ -25,15 +25,19 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
 
   useEffect(
     () => {
-      console.log(currentPlan.workoutsCompleted)
-      // console.log('Reloading');
       const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+      
       const chosenWorkout = workouts
         .filter(w => {
           const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : w.date;
-          return workoutDate > now && 
-                 workoutDate.getDate() === now.getDate() && 
-                 w.completed === false;
+          // Show workouts that are today (including future times today) and not completed
+          return workoutDate >= today && 
+                 workoutDate < tomorrow && 
+                 w.completed === false &&
+                 w.planId === currentPlan.planID; // Only show workouts from current plan
         })
         .sort((a,b) => {
           const dateA = a.date instanceof Timestamp ? a.date.toDate() : a.date;
@@ -42,11 +46,16 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         })[0]
       setUpcomingWorkout(chosenWorkout)
     }
-  , [workouts])
+  , [workouts, currentPlan.planID]) // Add currentPlan.planID to dependencies
 
     // Plan Details Modal--------------------------------
     const [showPlanDetails, setShowPlanDetails] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(currentPlan);
+
+    // Update selectedPlan when currentPlan changes
+    useEffect(() => {
+      setSelectedPlan(currentPlan);
+    }, [currentPlan]);
 
     // Auto-open plan details if requested
     useEffect(() => {
@@ -154,8 +163,9 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
           style={[styles.secondaryButton, { flex: 1, marginTop: 16 }]}
           onPress={() => setShowPlanDetails(true)}
           icon="information-outline"
+          disabled={deletingPlans.includes(currentPlan.planID)}
         >
-          Details
+          {deletingPlans.includes(currentPlan.planID) ? 'Plan Deleting...' : 'Details'}
         </Button>
       
       <PlanDetailsModal

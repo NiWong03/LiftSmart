@@ -16,20 +16,48 @@ export default function WorkoutPage() {
   const [expandedUpcomingId, setExpandedUpcomingId] = useState<string | null>(null);
  
 
-  // Get today's workouts from current plan
-  const todaysWorkouts = workouts.filter(workout => 
-    workout.planId === currentPlan?.planID
-  );
+  // Get this week's workouts from current plan and sort by date
+  const thisWeeksWorkouts = workouts
+    .filter(workout => {
+      if (!workout.planId || workout.planId !== currentPlan?.planID) return false;
+      
+      const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
+      const today = new Date();
+      
+      // Get start of current week (Sunday)
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      // Get end of current week (Saturday)
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      return workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+    })
+    .sort((a, b) => {
+      const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+      const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-  // Get upcoming workouts (next 7 days)
-  const upcomingWorkouts = workouts.filter(workout => {
-    if (!workout.planId || workout.planId !== currentPlan?.planID) return false;
-    
-    const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
-    const today = new Date();
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return workoutDate >= today && workoutDate <= nextWeek;
-  }).slice(0, 3);
+  // Get upcoming workouts (next week and beyond) and sort by date
+  const upcomingWorkouts = workouts
+    .filter(workout => {
+      if (!workout.planId || workout.planId !== currentPlan?.planID) return false;
+      
+      const workoutDate = workout.date instanceof Timestamp ? workout.date.toDate() : new Date(workout.date);
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7); // Start of next week
+      return workoutDate >= nextWeek;
+    })
+    .sort((a, b) => {
+      const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+      const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    // No slice needed - show all upcoming workouts from the plan
 
 
   const startWorkout = (workout: Workout) => {
@@ -119,10 +147,10 @@ export default function WorkoutPage() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.workoutScrollContent}>
         <View style={styles.sectionContainer}>
           <Text style={[styles.surfaceText, styles.sectionTitle]}>
-            Today's Workouts
+            This Week's Workouts
           </Text>
           
-          {todaysWorkouts.length === 0 ? (
+          {thisWeeksWorkouts.length === 0 ? (
             <Card style={[styles.workoutCard, { elevation: 4 }]}>
               <Card.Content style={{ 
                 padding: 40, 
@@ -140,7 +168,7 @@ export default function WorkoutPage() {
             </Card>
           ) : (
             <View style={{ gap: 16 }}>
-              {todaysWorkouts.map((workout: Workout) => (
+              {thisWeeksWorkouts.map((workout: Workout) => (
                 <Card key={workout.id} style={[styles.workoutCard, { elevation: 8}]}> 
                   <Card.Content style={styles.cardContentLg}>
                     <View style={[styles.rowBetweenStart, { marginBottom: 16 }]}>
@@ -193,7 +221,7 @@ export default function WorkoutPage() {
         {upcomingWorkouts.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={[styles.surfaceText, styles.sectionTitle]}>
-              Upcoming This Week
+              Upcoming Workouts
             </Text>
             <View style={{ gap: 16 }}>
               {upcomingWorkouts.map((workout) => (

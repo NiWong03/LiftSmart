@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from '../styles';
-import { Set, Workout } from './WorkoutContext';
+import { Set, Workout, useWorkout } from './WorkoutContext';
 
 export interface ActiveSet {
   exerciseName: string;
@@ -55,6 +55,7 @@ export default function ActiveWorkoutModal({
 }: ActiveWorkoutModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
+  const { markWorkoutComplete } = useWorkout(); // Add this line
   const [showHistory, setShowHistory] = useState(false);
   const [localWorkoutTime, setLocalWorkoutTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -275,21 +276,21 @@ export default function ActiveWorkoutModal({
       
       // Check if we should start rest timer
       const exercise = activeWorkout.workout.exercises_list.find(ex => ex.name === exerciseName);
-      console.log('Exercise found:', exercise?.name);
+      
       if (exercise && exercise.sets[setNumber - 1]) {
         const set = exercise.sets[setNumber - 1];
-        console.log('Set found:', set);
+        
         const rawRestValue = set[3]; // rest time is at index 3
-        console.log('Raw rest value:', rawRestValue);
+        
         
         // Use the same logic as parseSet for rest time
         const restValue = rawRestValue === 0 ? 60 : rawRestValue;
-        console.log('Parsed rest value:', restValue);
+        
         
         if (restValue > 0) {
           shouldStartRest = true;
           restTime = restValue;
-          console.log('Starting rest timer with:', restTime);
+          
         }
       }
     }
@@ -304,11 +305,11 @@ export default function ActiveWorkoutModal({
         isResting: true,
         currentRestTime: restTime,
       };
-      console.log('Updated workout with rest timer:', updatedActiveWorkout.isResting, updatedActiveWorkout.currentRestTime);
+      
     }
     
     // Single update call with all changes
-    console.log('Final workout update:', updatedActiveWorkout);
+    
     onUpdateActiveWorkout(updatedActiveWorkout);
   };
 
@@ -963,6 +964,7 @@ export default function ActiveWorkoutModal({
               duration: formatTime(localWorkoutTime), // Update duration with actual workout time
             };
             onUpdateWorkout(completedWorkout);
+            markWorkoutComplete(activeWorkout.workout.id);
             onClose();
           }}
           icon="stop"

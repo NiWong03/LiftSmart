@@ -19,13 +19,22 @@ interface PlanDetailsModalProps {
 function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: PlanDetailsModalProps) {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
-  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans, deleteWorkout, deletePlan } = useWorkout();
+  const { currentPlan, workouts, updatePlan, updateWorkouts, addWorkout, allPlans, deleteWorkout, deletePlan, startPlanDeletion, deletingPlans } = useWorkout();
 
   // Get the updated plan data from context instead of using the prop
   const updatedPlan = allPlans.find(p => p.planID === plan.planID) || plan;
+  
+  // Check if this plan is being deleted
+  const isDeleting = deletingPlans.includes(updatedPlan.planID);
 
-  // Filter workouts to only show those belonging to this plan
-  const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
+  // Filter workouts to only show those belonging to this plan and sort by date (earliest first)
+  const planWorkouts = workouts
+    .filter(workout => workout.planId === updatedPlan.planID)
+    .sort((a, b) => {
+      const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+      const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
 
   const [expandedWorkouts, setExpandedWorkouts] = useState<{ [key: string]: boolean }>({});
   const [showAddWorkout, setShowAddWorkout] = useState(false);
@@ -80,11 +89,6 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
   const handleSubmitWorkout = async () => {
     if (!newWorkout.name.trim()) return;
 
-    console.log('Adding workout to existing plan:', {
-      name: newWorkout.name,
-      exercises_count: newWorkout.exercises_list.length,
-      planId: updatedPlan.planID
-    });
 
     // Convert 24-hour format to 12-hour format
     const convertTo12Hour = (time24: string) => {
@@ -116,17 +120,10 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
       })) || []
     };
 
-    console.log('Created workout object:', {
-      name: workout.name,
-      exercises: workout.exercises,
-      startTime: workout.startTime,
-      endTime: workout.endTime,
-      exercises_list_length: workout.exercises_list?.length || 0
-    });
 
     try {
       await addWorkout(workout, updatedPlan.planID); // Pass the plan ID
-      console.log('Workout added to Firebase successfully');
+      
       setShowAddWorkout(false);
       resetForm();
     } catch (error) {
@@ -136,21 +133,24 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
 
   // Handle plan deletion
   const handlePlanDeleted = () => {
-    console.log('Plan deleted, closing modal');
+    
     setShowEditPlan(false);
     onDismiss();
   };
 
   const handleDelete = async () => {
     try {
-      console.log('Starting plan deletion for:', updatedPlan.planID);
       
-      // Close the confirmation dialog first
+      
+      // Close the confirmation dialog but keep modal open
       setShowDeleteConfirm(false);
+      
+      // Mark plan as deleting
+      startPlanDeletion(updatedPlan.planID);
       
       // Delete all workouts associated with this plan
       const planWorkouts = workouts.filter(workout => workout.planId === updatedPlan.planID);
-      console.log('Deleting', planWorkouts.length, 'workouts associated with plan');
+      
       
       for (const workout of planWorkouts) {
         await deleteWorkout(workout.id);
@@ -159,30 +159,48 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
       // Delete the plan itself
       await deletePlan(updatedPlan.planID);
       
-      console.log('Plan and associated workouts deleted successfully');
       
-      // Close the modal
-      onDismiss();
     } catch (error) {
       console.error('Error deleting plan:', error);
-      // Reopen confirmation dialog if deletion failed
-      setShowDeleteConfirm(true);
     }
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <Surface style={[styles.planDetailsModal, { position: 'relative' }]}>
-          <View style={styles.modalHeader}>
-            <Text variant="headlineMedium" style={[styles.primaryText, { paddingRight: 72 }]}>{updatedPlan.name} • {updatedPlan.duration} Weeks</Text>
-            <View style={{ position: 'absolute', top: 8, right: 8, flexDirection: 'row' }}>
-              <IconButton icon="pencil" onPress={() => setShowEditPlan(true)} />
-              <IconButton icon="close" onPress={onDismiss} />
-            </View>
+                 <Surface style={[styles.planDetailsModal, { position: 'relative' }]}>
+                      <View style={[styles.modalHeader, { zIndex: 20 }]}>
+             <Text variant="headlineMedium" style={[styles.primaryText, { paddingRight: 72 }]}>
+               {updatedPlan.name} • {updatedPlan.duration} Weeks
+               {isDeleting && (
+                 <Text style={{ color: theme.colors.error, fontSize: 14, marginLeft: 8 }}>
+                   (Deleting...)
+                 </Text>
+               )}
+             </Text>
+                         <View style={{ position: 'absolute', top: 8, right: 8, flexDirection: 'row' }}>
+               <IconButton 
+                 icon="pencil" 
+                 onPress={() => setShowEditPlan(true)} 
+                 disabled={isDeleting}
+               />
+               <IconButton icon="close" onPress={onDismiss} />
+             </View>
           </View>
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-            <View style={{ padding: 16 }}>
+                     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+             <View style={{ padding: 16, position: 'relative' }}>
+               {isDeleting && (
+                 <View style={{
+                   position: 'absolute',
+                   top: 0,
+                   left: 0,
+                   right: 0,
+                   bottom: 0,
+                   backgroundColor: 'rgba(128, 128, 128, 0.3)',
+                   zIndex: 10,
+                   pointerEvents: 'none'
+                 }} />
+               )}
               <Text variant="headlineSmall" style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>Goal:</Text>
               <View style={styles.goaltextbox}> 
                 <Text variant="titleMedium" style={{ color: theme.colors.primary }}>{updatedPlan.goal}</Text>
@@ -201,8 +219,12 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
                 />
               ))}
 
-            <Card style={styles.addWorkoutCard} mode="outlined">
-              <TouchableOpacity onPress={() => setShowAddWorkout(true)} style={styles.addWorkoutContent}>
+                         <Card style={styles.addWorkoutCard} mode="outlined">
+               <TouchableOpacity 
+                 onPress={() => setShowAddWorkout(true)} 
+                 style={styles.addWorkoutContent}
+                 disabled={isDeleting}
+               >
                 <IconButton
                   icon="plus-circle-outline"
                   size={32}
@@ -217,9 +239,13 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
               </TouchableOpacity>
             </Card>
 
-            {/* Delete Plan Button */}
-            <Card style={[styles.addWorkoutCard, { marginTop: 16 }]} mode="outlined">
-              <TouchableOpacity onPress={() => setShowDeleteConfirm(true)} style={styles.addWorkoutContent}>
+                         {/* Delete Plan Button */}
+             <Card style={[styles.addWorkoutCard, { marginTop: 16 }]} mode="outlined">
+               <TouchableOpacity 
+                 onPress={() => setShowDeleteConfirm(true)} 
+                 style={styles.addWorkoutContent}
+                 disabled={isDeleting}
+               >
                 <IconButton
                   icon="delete"
                   size={32}
@@ -247,7 +273,7 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
               plan={updatedPlan}
               onDismiss={() => setShowEditPlan(false)}
               onUpdate={(updatedPlan) => {
-                console.log('Plan updated:', updatedPlan);
+                
                 setShowEditPlan(false);
               }}
             />
