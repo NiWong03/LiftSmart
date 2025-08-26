@@ -36,9 +36,9 @@ const Login = () => {
     setLoading(true);
     try{
         const response = await signInWithEmailAndPassword( auth, email, password);
-        console.log(response);
+
     } catch (error) {
-        console.log(error);
+
         alert('No log in for u\n Incorrect email or password');
     } finally {
         setLoading(false);
@@ -49,7 +49,7 @@ const Login = () => {
     setLoading(true);
     try{
         const response = await createUserWithEmailAndPassword(auth, email, password);
-        console.log(response);
+
         alert('user created');
     } catch (error) {
         console.log(error);

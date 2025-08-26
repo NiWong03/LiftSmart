@@ -26,6 +26,11 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
     }
   };
 
+  const formatWorkoutTime = (timeString: string) => {
+    if (!timeString) return '';
+    return timeString; // Already in "h:mm AM/PM" format
+  };
+
   return (
     <Portal>
       <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modalContainer}>
@@ -40,11 +45,21 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
           <Card.Content>
             <View style={styles.row}>
               <IconButton icon="calendar" size={20} disabled />
-              <Text style={{ color: colors.onSurfaceVariant }}>{formatDateTime(event.start)}</Text>
+              <Text style={{ color: colors.onSurfaceVariant }}>
+                {isWorkoutEvent && event.workout 
+                  ? `${formatDateTime(event.start).split(' • ')[0]} • ${formatWorkoutTime(event.workout.startTime)}`
+                  : formatDateTime(event.start)
+                }
+              </Text>
             </View>
             <View style={styles.row}>
               <IconButton icon="clock" size={20} disabled />
-              <Text style={{ color: colors.onSurfaceVariant }}>{formatDateTime(event.end)}</Text>
+              <Text style={{ color: colors.onSurfaceVariant }}>
+                {isWorkoutEvent && event.workout 
+                  ? `${formatDateTime(event.end).split(' • ')[0]} • ${formatWorkoutTime(event.workout.endTime)}`
+                  : formatDateTime(event.end)
+                }
+              </Text>
             </View>
             
             {isWorkoutEvent && event.workout && (
@@ -63,7 +78,7 @@ export default function EventDetailCard({ visible, event, onDismiss, }: EventDet
                     }}
                     onPress={() => {
                       if (event.workout?.completed) {
-                        console.log('Complete chip touched');
+
                         if (event.workoutId) {
                           const workoutId = event.workoutId; 
                           Alert.alert(

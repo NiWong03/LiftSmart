@@ -19,7 +19,6 @@ const PlansScreen = () => {
   
   const [selectedEmoji, setSelectedEmoji] = useState(currentPlan.emoji);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [upcomingWorkout, setUpcomingWorkout] = useState<Workout | undefined>(undefined);
   const [showAddPlan, setShowAddPlan] = useState(false);
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -34,7 +33,7 @@ const PlansScreen = () => {
   // Reset newPlan state when modal opens/closes
   useEffect(() => {
     if (showAddPlan) {
-      console.log('Modal opening - resetting newPlan state');
+      
       setNewPlan({
         name: '',
         goal: '',
@@ -46,27 +45,6 @@ const PlansScreen = () => {
       });
     }
   }, [showAddPlan]);
-  
-  useEffect(
-    () => {
-      console.log(currentPlan.workoutsCompleted)
-      // console.log('Reloading');
-      const now = new Date();
-      const chosenWorkout = workouts
-        .filter(w => {
-          const workoutDate = w.date instanceof Timestamp ? w.date.toDate() : new Date(w.date);
-          return workoutDate > now && 
-                 workoutDate.getDate() === now.getDate() && 
-                 w.completed === false;
-        })
-        .sort((a,b) => {
-          const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
-          const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
-          return dateA.getTime() - dateB.getTime();
-        })[0]
-      setUpcomingWorkout(chosenWorkout)
-    }
-  , [workouts])
 
   const handleEmojiSelect = (emoji: string) => {
     setSelectedEmoji(emoji);
@@ -79,10 +57,10 @@ const PlansScreen = () => {
     
     if (!planToSubmit.name.trim() || !planToSubmit.goal.trim()) return;
     
-    console.log('=== PLAN SUBMISSION DEBUG ===');
-    console.log('Submitting plan with workouts:', planToSubmit.workouts?.length || 0);
-    console.log('Workouts data:', planToSubmit.workouts);
-    console.log('Full plan object:', planToSubmit);
+    
+    
+    
+    
     
     // Create the new plan (you'll need to add this to WorkoutContext)
     const plan = {
@@ -91,14 +69,14 @@ const PlansScreen = () => {
       workoutsCompleted: 0,
     };
     
-    console.log('Plan object to be created:', plan);
-    console.log('Workouts to be passed to addPlan:', planToSubmit.workouts);
+    
+    
     
     try {
-      console.log('Calling addPlan...');
+      
       await addPlan(plan, planToSubmit.workouts);
-      console.log('addPlan completed successfully');
-      console.log('Plans:', allPlans.map(plan => plan.name));
+      
+      
       setShowAddPlan(false);
       
       // Reset form
@@ -111,7 +89,7 @@ const PlansScreen = () => {
         totalWorkouts: 12,
         workouts: [] as Workout[],
       });
-      console.log('Form reset completed');
+      
     } catch (error) {
       console.error('Error submitting plan:', error);
     }
@@ -142,7 +120,7 @@ const PlansScreen = () => {
           {/* Plans List */}
           {allPlans.length > 0 && <AllPlansCard />}
 
-          <Card style={[styles.workoutCard, {marginBottom: -2,}]} mode="outlined">
+          <Card style={[styles.workoutCard, {marginBottom: 20,}]} mode="outlined">
             <TouchableOpacity onPress={() => setShowAddPlan(true)} style={[styles.addWorkoutContent, {marginTop: -16}]}>
               <IconButton
                 icon="plus-circle-outline"
@@ -174,7 +152,7 @@ const PlansScreen = () => {
         onPlanChange={setNewPlan}
         onSubmit={handleSubmitPlan}
         onDismiss={() => {
-          console.log('Modal closing - resetting newPlan state');
+          
           setNewPlan({
             name: '',
             goal: '',

@@ -20,23 +20,10 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
   
   // Get the latest workout data from context
   const currentWorkout = workouts.find(w => w.id === workout.id) || workout;
-  
-  // Debug logging
-  // console.log('WorkoutCard render:', {
-  //   workoutId: workout.id,
-  //   originalName: workout.name,
-  //   currentName: currentWorkout.name,
-  //   workoutsLength: workouts.length,
-  //   foundWorkout: !!workouts.find(w => w.id === workout.id)
-  // });
 
   // Force re-render when workout data changes
   useEffect(() => {
-    console.log('WorkoutCard useEffect - workout data changed:', {
-      workoutId: workout.id,
-      currentName: currentWorkout.name,
-      exercisesCount: currentWorkout.exercises
-    });
+    // Workout data changed - component will re-render
   }, [currentWorkout.name, currentWorkout.exercises, currentWorkout.exercises_list]);
 
   const getWorkoutDate = (date: Date | Timestamp | string): Date => {
