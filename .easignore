@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+
+# Expo
+.expo
+.expo-shared
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production.local
+.env.test.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Temporary folders
+tmp/
+temp/
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Scripts
+scripts/
+
+# Documentation
+docs/
+README.md

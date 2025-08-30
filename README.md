@@ -78,4 +78,8 @@ components/
 - **Fast**: Optimized performance for smooth user experience
 - **Accessible**: Designed for users of all fitness levels
 
+## 📥 Download
+
+- [Download GymReact APK](gymreact-apk/gymReact.apk)
+
 
