@@ -10,7 +10,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.niwong03.LiftSmart",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -43,7 +47,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "37f00705-dfe7-4553-abc6-729f5bd3764a"
+        "projectId": "95aec0c8-53ae-4021-8ad0-8dff172f20a5"
       }
     }
   }
