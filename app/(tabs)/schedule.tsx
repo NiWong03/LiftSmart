@@ -175,7 +175,7 @@ const Schedule: React.FC = () => {
            
          }}
          events={allEvents}
-         height={screenHeight-120}
+         height={screenHeight-200}
          onPressEvent={(event) => {
            // react-native-big-calendar passes event object
            setSelectedEvent(event as { title: string; start: Date; end: Date });
@@ -216,6 +216,7 @@ const Schedule: React.FC = () => {
 const styles = StyleSheet.create({
   calendarContainer: {
     paddingTop: 60,
+    paddingBottom: 90,
     flex: 1,
   },
   dropdownContainer: {

@@ -292,12 +292,26 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     if (updates.exercises_list) {
       cleanUpdates.exercises_list = updates.exercises_list.map(exercise => ({
         name: exercise.name || '',
-        sets: exercise.sets?.map(set => ({
-          reps: set[0] || 0,
-          weight: set[1] || '',
-          time: set[2] || 0,
-          rest: set[3] || 0
-        })) || [],
+        sets: exercise.sets?.map((set: any) => {
+          // Handle both array format [reps, weight, time, rest] and object format {reps, weight, time, rest}
+          if (Array.isArray(set)) {
+            // Array format: [reps, weight, time, rest]
+            return {
+              reps: set[0] || 0,
+              weight: set[1] || '',
+              time: set[2] || 0,
+              rest: set[3] || 0
+            };
+          } else {
+            // Object format: {reps, weight, time, rest} - already converted
+            return {
+              reps: set.reps || 0,
+              weight: set.weight || '',
+              time: set.time || 0,
+              rest: set.rest || 0
+            };
+          }
+        }) || [],
         description: exercise.description || ''
       }));
     }
@@ -603,13 +617,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
   };
 
       const getWorkoutEvents = (): CalendarEvent[] => {
-      console.log('DEBUG - getWorkoutEvents called with workouts:', workouts.map(w => ({ 
-        id: w.id, 
-        name: w.name, 
-        startTime: w.startTime, 
-        endTime: w.endTime,
-        date: w.date 
-      })));
+
       
       return workouts
         .filter(workout => workout.planId === currentPlan.planID) // Only show workouts from current plan
@@ -621,14 +629,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
         const startTime = parseTimeToDate(workout.startTime, workoutDate);
         const endTime = parseTimeToDate(workout.endTime, workoutDate);
 
-        console.log('DEBUG - Creating event for workout:', {
-          id: workout.id,
-          name: workout.name,
-          startTime: workout.startTime,
-          endTime: workout.endTime,
-          parsedStart: startTime,
-          parsedEnd: endTime
-        });
+
 
         return {
           title: workout.name,
@@ -645,11 +646,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
 
  
   const parseTimeToDate = (timeString: string, date: Date): Date => {
-    console.log('DEBUG - parseTimeToDate input:', { timeString, date });
-    
     // Handle empty or undefined time strings
     if (!timeString || timeString.trim() === '') {
-      console.log('DEBUG - parseTimeToDate: empty timeString, returning date as-is');
       return date;
     }
     
@@ -658,25 +656,18 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({ children }) =>
     const time = parts[0];
     const period = parts[1];
     
-    console.log('DEBUG - parseTimeToDate split:', { time, period, parts });
-    
     if (!time || !period) {
-      console.log('DEBUG - parseTimeToDate: invalid time format, returning date as-is');
       return date;
     }
     
     const [hours, minutes] = time.split(':').map(Number);
-    console.log('DEBUG - parseTimeToDate hours/minutes:', { hours, minutes });
     
     let hour24 = hours;
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    console.log('DEBUG - parseTimeToDate hour24:', hour24);
-    
     const result = new Date(date);
     result.setHours(hour24, minutes, 0, 0);
-    console.log('DEBUG - parseTimeToDate result:', result);
     return result;
   };
 

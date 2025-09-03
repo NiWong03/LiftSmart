@@ -49,6 +49,8 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
   const [typingMessage, setTypingMessage] = useState('');
   const [fullTypingMessage, setFullTypingMessage] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<any>(null);
+  const textRef = useRef(""); // store text here without re-rendering
 
   // Add keyboard listeners
   useEffect(() => {
@@ -120,11 +122,18 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     }
   }, [isTyping, fullTypingMessage]);
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    const sendMessage = async () => {
+    const text = textRef.current.trim();
+    if (!text || isLoading) return;
 
-    const messageToSend = inputText.trim();
+    const messageToSend = text;
     console.log('Sending message:', messageToSend);
+    
+    // Clear the visible input
+    if (inputRef.current) {
+      inputRef.current.clear();
+    }
+    textRef.current = ""; // reset stored text
 
     // Clear any existing edit suggestions when user sends a new message
     setHasEditSuggestions(false);
@@ -138,7 +147,6 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
         timestamp: new Date(),
       };
     setMessages(prev => [...prev, userMessage]);
-    setInputText('');
     setIsLoading(true);
     // Determine the type of request
     const inputLower = messageToSend.toLowerCase();
@@ -183,16 +191,19 @@ export const ChatbotModal: React.FC<ChatbotModalProps> = ({
     try { 
         let systemPrompt = '';
         
-        if (isEditRequest && currentPlan.name) {
-          // For edits, include current plan data
-          const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
-          systemPrompt = `You are an AI fitness coach editing an existing workout plan.
+                 if (isEditRequest && currentPlan.name) {
+           // For edits, include current plan data
+           const currentPlanWorkouts = workouts.filter(w => w.planId === currentPlan.planID);
+                       systemPrompt = `You are an AI fitness coach editing an existing workout plan.
+
+You are an AI fitness coach editing an existing workout plan.
 
 RESPONSE FORMAT:
 Return JSON with:
 - "action": "edit"
 - "response": A clear summary of what you're changing
-- "plan": The complete updated plan object (replace the entire plan)
+- "workoutsToUpdate": Array of ONLY the workouts that need changes (not the entire plan)
+- "workoutIds": Array of workout IDs that were modified
 
 CURRENT PLAN TO EDIT:
 ${JSON.stringify({
@@ -213,14 +224,44 @@ ${JSON.stringify({
   }))
 })}
 
+EDITING GUIDELINES:
+- ONLY return workouts that actually need changes
+- If user asks to make the plan "more intense", return ALL workouts with increased weights/reps
+- Keep ALL existing exercise names exactly as they are
+- Only modify weights, reps, or rest times for existing exercises
+- Do NOT change workout names, days, or structure
+- Do NOT add new exercises or change exercise names
+- Return ONLY the workouts that need updates, not the entire plan
+
 RULES:
-- Return the complete updated plan, not just changes
+- Return ONLY the workouts that need changes (not the entire plan)
 - Preserve existing workout IDs
 - Valid JSON only, no markdown
 - Dates: "YYYY-MM-DD" format
 - Time: "h:mm AM/PM" format
 - Sets: arrays in format [reps:number, weight:string, time:number, rest:number]
-- Difficulty: "Easy" | "Medium" | "Hard"`;
+- Difficulty: "Easy" | "Medium" | "Hard"
+- CRITICAL: Sets must be arrays, not objects: [reps, weight, time, rest]
+- CRITICAL: Example: [10, "50 lbs", 0, 60] not {"reps": 10, "weight": "50 lbs"}
+
+EXAMPLE RESPONSE FORMAT:
+{
+  "action": "edit",
+  "response": "Increased weights and reps for all exercises to make the plan more intense",
+  "workoutsToUpdate": [
+    {
+      "id": "workoutId1",
+      "name": "Week 1 - Upper Body Strength",
+      "exercises_list": [
+        {
+          "name": "Bench Press",
+          "sets": [[12, "60 lbs", 0, 60], [10, "65 lbs", 0, 60], [8, "70 lbs", 0, 60]]
+        }
+      ]
+    }
+  ],
+  "workoutIds": ["workoutId1", "workoutId2"]
+}`;
         } else if (isAdviceRequest) {
           // For general fitness advice
           systemPrompt = `You are an experienced fitness coach and personal trainer. Provide helpful, accurate, and motivational fitness advice.
@@ -426,35 +467,44 @@ CUSTOM SCHEDULE (if user specifies days):
 
         try {
                 const responseContent = response2.choices[0].message.content;
-                if (!responseContent) return;
+                console.log('Response content:', responseContent);
                 
-                                 // Handle different response types
-                 if (isAdviceRequest) {
-                   // For advice requests, start typing animation
-                   setIsTyping(true);
-                   setFullTypingMessage(responseContent);
-                 } else {
-                   // For plan creation/editing, parse JSON
-                   const parsedResponse = JSON.parse(responseContent); 
-                   
-                   // Handle different action types
-                   if (parsedResponse.action === 'edit') {
-                     // Set the new edit suggestions
-                     setHasEditSuggestions(true);
-                     setHasDraftPlan(false);
-                     setStoredEditResponse(parsedResponse);
-                   } else {
-                     // Create new plan (default behavior)
-                     onParsedResponse?.(parsedResponse);
-                     setHasDraftPlan(true);
-                     setHasEditSuggestions(false);
-                   }
-                   
-                   console.log('response parsed!')           
-                   // Start typing animation for the response
-                   setIsTyping(true);
-                   setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
-                 }
+                if (!responseContent) {
+                    console.log('No response content, returning early');
+                    return;
+                }
+                
+                // Handle different response types
+                if (isAdviceRequest) {
+                    console.log('Processing advice request');
+                    // For advice requests, start typing animation
+                    setIsTyping(true);
+                    setFullTypingMessage(responseContent);
+                } else {
+                    console.log('Processing plan/edit request');
+                    // For plan creation/editing, parse JSON
+                    const parsedResponse = JSON.parse(responseContent); 
+                    
+                    // Handle different action types
+                    if (parsedResponse.action === 'edit') {
+                        console.log('Setting edit suggestions');
+                        // Set the new edit suggestions
+                        setHasEditSuggestions(true);
+                        setHasDraftPlan(false);
+                        setStoredEditResponse(parsedResponse);
+                    } else {
+                        console.log('Creating new plan');
+                        // Create new plan (default behavior)
+                        onParsedResponse?.(parsedResponse);
+                        setHasDraftPlan(true);
+                        setHasEditSuggestions(false);
+                    }
+                    
+                    console.log('response parsed!')           
+                    // Start typing animation for the response
+                    setIsTyping(true);
+                    setFullTypingMessage(parsedResponse.response || 'Sorry, I couldn\'t generate a response.');
+                }
         } catch (parseError) {
             // If not JSON, use the raw response with typing animation
             console.log('JSON Parse Error:', parseError);
@@ -492,20 +542,20 @@ CUSTOM SCHEDULE (if user specifies days):
                 setFullTypingMessage(responseText || 'Sorry, I couldn\'t generate a response.');
             }
         }
-    } catch (error) {
-        console.error("OpenAI Error:", error);
-        // Add error message to chat
-        const errorMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            role: 'assistant',
-            content: 'Sorry, I encountered an error. Please try again.',
-            timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-    } finally {
-        console.log("Setting isLoading to false");
-        setIsLoading(false);
-    }
+            } catch (error) {
+            console.error("OpenAI Error:", error);
+            // Add error message to chat
+            const errorMessage: Message = {
+                id: (Date.now() + 2).toString(),
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.',
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            console.log("Setting isLoading to false");
+            setIsLoading(false);
+        }
   };
 
   return (
@@ -675,23 +725,30 @@ CUSTOM SCHEDULE (if user specifies days):
 
             {/* Input */}
             <View style={[styles.inputContainer, { borderTopColor: theme.colors.outline }]}>
-              <TextInput
-                mode="outlined"
-                placeholder="Ask your fitness coach..."
-                value={inputText}
-                onChangeText={setInputText}
-                multiline
-                style={styles.textInput}
-                outlineStyle={{ borderRadius: 24 }}
-                onSubmitEditing={sendMessage}
-              />
+                             <TextInput
+                 ref={inputRef}
+                 mode="outlined"
+                 placeholder="Ask your fitness coach..."
+                 multiline={false}
+                 autoCorrect={true}
+                 autoCapitalize="sentences"
+                 spellCheck={true}
+                 style={styles.textInput}
+                 outlineStyle={{ borderRadius: 24 }}
+                 onSubmitEditing={sendMessage}
+                 blurOnSubmit={false}
+                 returnKeyType="send"
+                 onChangeText={(t) => {
+                   textRef.current = t; // keep latest text without re-rendering
+                 }}
+               />
               <IconButton
                 icon="send"
                 size={24}
                 iconColor={theme.colors.primary}
                 style={[styles.sendButton, { backgroundColor: theme.colors.primaryContainer }]}
                 onPress={sendMessage}
-                disabled={!inputText.trim()}
+                disabled={isLoading}
               />
             </View>
           </KeyboardAvoidingView>
@@ -757,7 +814,8 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    maxHeight: 100,
+    maxHeight: 50,
+    minHeight: 50,
   },
   sendButton: {
     borderRadius: 24,
