@@ -96,10 +96,10 @@ const Login = () => {
                 style={{ backgroundColor: theme.colors.primary, marginBottom: 16 }} 
                 />
                 <Text variant="displaySmall" style={[styles.primaryText, { textAlign: 'center' }]}>
-                GymReact
+                LiftSmart
                 </Text>
                 <Text variant="bodyLarge" style={[styles.surfaceVariantText, { textAlign: 'center', marginTop: 8 }]}>
-                Welcome to GymReact!
+                Welcome to LiftSmart!
                 </Text>
             </View>
 

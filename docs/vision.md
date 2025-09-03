@@ -1,4 +1,4 @@
-# GymReact
+# LiftSmart
 Problem Statement: People want to reach their fitness goals but there is too much information online and existing tools don't narrow down or personalize fitness information.
 
 Objectives: Build a lightweight app to log workouts, set goals, view progress easily, and track workout intensity.
