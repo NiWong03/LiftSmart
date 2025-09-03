@@ -78,4 +78,23 @@ components/
 - **Fast**: Optimized performance for smooth user experience
 - **Accessible**: Designed for users of all fitness levels
 
+## 📥 Download
+
+- [Download GymReact APK](gymreact-apk/gymReact.apk)
+
+## 📸 Screenshots
+
+![Screenshot 1](Screenshots/ss1.PNG)
+![Screenshot 2](Screenshots/ss2.PNG)
+![Screenshot 3](Screenshots/ss3.PNG)
+![Screenshot 4](Screenshots/ss4.PNG)
+![Screenshot 5](Screenshots/ss5.PNG)
+![Screenshot 6](Screenshots/ss6.PNG)
+![Screenshot 7](Screenshots/ss7.PNG)
+![Screenshot 8](Screenshots/ss8.PNG)
+![Screenshot 9](Screenshots/ss9.PNG)
+![Screenshot 10](Screenshots/ss10.PNG)
+![Screenshot 11](Screenshots/ss11.PNG)
+![Screenshot 12](Screenshots/ss12.PNG)
+
 
