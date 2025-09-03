@@ -1,12 +1,12 @@
-# GymReact 💪
+# LiftSmart 💪
 
 A lightweight, AI-powered fitness app built with React Native and Expo that helps users track workouts, set goals, and achieve their fitness objectives through personalized planning and intelligent suggestions.
 
-![GymReact Demo](Screenshots/GymReact-Demo.gif)
+![LiftSmart Demo](Screenshots/LiftSmart-Demo.gif)
 
 ## 🎯 Problem Statement
 
-People want to reach their fitness goals but there's too much information online, and existing tools don't narrow down or personalize fitness information effectively. GymReact solves this by providing a focused, intelligent fitness tracking experience.
+People want to reach their fitness goals but there's too much information online, and existing tools don't narrow down or personalize fitness information effectively. LiftSmart solves this by providing a focused, intelligent fitness tracking experience.
 
 ## ✨ Features
 
@@ -80,7 +80,7 @@ components/
 
 ## 📥 Download
 
-- [Download GymReact APK](gymreact-apk/gymReact.apk)
+- [Download LiftSmart APK](liftSmart-apk/liftSmart.apk)
 
 ## 📸 Screenshots
 
