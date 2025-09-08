@@ -95,7 +95,7 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
                   />
                   <TextInput
                     label="Time"
-                    placeholder="(min)"
+                    placeholder="(sec)"
                     mode="outlined"
                     value={set.time}
                     keyboardType="numeric"
@@ -108,7 +108,7 @@ export default function AddExerciseModal({ visible, onDismiss, onSubmit }: AddEx
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <TextInput
                     label="Rest"
-                    placeholder="(min)"
+                    placeholder="(sec)"
                     mode="outlined"
                     value={set.rest}
                     keyboardType="numeric"
