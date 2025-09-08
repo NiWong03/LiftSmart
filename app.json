@@ -1,14 +1,13 @@
 {
   "expo": {
-    "owner": "LiftSmartTeam",
+    "owner": "liftsmart",
     "name": "LiftSmart",
-    "slug": "liftSmart",
+    "slug": "LiftSmart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "liftsmart",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.niwong03.LiftSmart",

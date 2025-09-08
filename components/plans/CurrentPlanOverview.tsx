@@ -2,7 +2,7 @@ import PlanDetailsModal from '@/components/plans/PlanDetailsModal';
 import { useWorkout, Workout } from '@/components/plans/WorkoutContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Avatar, Button, Chip, Divider, IconButton, Surface, Text, useTheme } from 'react-native-paper';
 import { createPlanStyles } from './styles';
@@ -152,7 +152,7 @@ export default function CurrentPlanOverview({ selectedEmoji, onEmojiPress }: Cur
         <Button 
           mode="contained" 
           style={[styles.primaryButton, { flex: 1 }]}
-          onPress={() => router.push('/workout')}
+          onPress={() => ('/workout')}
           icon="play"
         >
           Continue Plan

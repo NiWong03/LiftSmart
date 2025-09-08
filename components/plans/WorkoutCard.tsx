@@ -1,18 +1,19 @@
 import { useWorkout, type Workout } from '@/components/plans/WorkoutContext';
 import { Timestamp } from 'firebase/firestore';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Text, useTheme } from 'react-native-paper';
-import { createPlanStyles } from './styles';
 import EditWorkoutModal from '../plans/EditWorkoutModal';
+import { createPlanStyles } from './styles';
 
 interface WorkoutCardProps {
   workout: Workout;
   isExpanded: boolean;
   onToggleExpanded: () => void;
+  onStart?: () => void;
 }
 
-export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: WorkoutCardProps) {
+export default function WorkoutCard({ workout, isExpanded, onToggleExpanded, onStart }: WorkoutCardProps) {
   const theme = useTheme();
   const { markWorkoutComplete, updateWorkout, workouts } = useWorkout();
   const styles = createPlanStyles(theme);
@@ -104,16 +105,15 @@ export default function WorkoutCard({ workout, isExpanded, onToggleExpanded }: W
           <View style={styles.workoutActions}>
             <Button 
               mode={currentWorkout.completed ? "outlined" : "contained"}
-              onPress={() => console.log(`Start ${currentWorkout.name}`)}
+              onPress={() => onStart?.()}
               style={{ flex: 1, marginRight: 4 }}
-              icon={currentWorkout.completed ? "repeat" : "play"}
+              icon={currentWorkout.completed ? "check-circle" : "play"}
             >
-              {currentWorkout.completed ? "Repeat" : "Start"}
+              {currentWorkout.completed ? "Done" : "Start"}
             </Button>
             <Button 
               mode="outlined" 
               onPress={() => {
-                console.log(`Edit ${currentWorkout.name}`)
                 setShowEditWorkoutModal(true);
               }}
               style={{ flex: 1, marginLeft: 4 }}
