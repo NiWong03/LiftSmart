@@ -8,9 +8,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "liftsmart",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.niwong03.LiftSmart",
+      "bundleIdentifier": "com.nicholaswong.LiftSmartAI",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -22,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.niwong03.LiftSmart",
+      "package": "com.nicholaswong.LiftSmartAI",
       "googleServicesFile": "./google-services.json"
     },
     "web": {
