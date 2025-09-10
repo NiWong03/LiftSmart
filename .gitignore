@@ -41,6 +41,9 @@ app-example
 
 # Firebase config with API keys
 firebaseAuth/FirebaseConfig.ts
+GoogleService-Info.plist
+google-services.json
 
 # OpenAI config with API keys
 OpenAI.config.js
+

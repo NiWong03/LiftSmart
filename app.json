@@ -1,8 +1,8 @@
 {
   "expo": {
-    "owner": "LiftSmartTeam",
+    "owner": "liftsmart",
     "name": "LiftSmart",
-    "slug": "liftSmart",
+    "slug": "LiftSmart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.niwong03.LiftSmart",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +23,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.niwong03.LiftSmart"
+      "package": "com.niwong03.LiftSmart",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +41,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ]
     ],
     "experiments": {
@@ -43,7 +59,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "37f00705-dfe7-4553-abc6-729f5bd3764a"
+        "projectId": "95aec0c8-53ae-4021-8ad0-8dff172f20a5"
       }
     }
   }
