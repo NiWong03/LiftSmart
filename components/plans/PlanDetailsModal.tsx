@@ -1,6 +1,7 @@
 import AddWorkoutModal from '@/components/plans/AddWorkoutModal';
 import EditPlanModal from '@/components/plans/EditPlanModal';
 import WorkoutCard from '@/components/plans/WorkoutCard';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Button, Card, IconButton, Surface, Text, useTheme } from 'react-native-paper';
@@ -216,6 +217,10 @@ function PlanDetailsModal({ visible, onDismiss, plan, openAddWorkout = false }: 
                   workout={workout}
                   isExpanded={expandedWorkouts[workout.id] || false}
                   onToggleExpanded={() => toggleWorkoutExpansion(workout.id)}
+                  onStart={() => {
+                    onDismiss();
+                    setTimeout(() => router.push('/workout'), 0);
+                  }}
                 />
               ))}
 

@@ -7,6 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { Button, Card, Divider, IconButton, Text, useTheme } from 'react-native-paper';
 
 
+
 export default function WorkoutPage() {
   const theme = useTheme();
   const styles = createPlanStyles(theme);
