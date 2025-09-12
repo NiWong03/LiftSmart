@@ -2,7 +2,7 @@
 
 A lightweight, AI-powered fitness app built with React Native and Expo that helps users track workouts, set goals, and achieve their fitness objectives through personalized planning and intelligent suggestions.
 
-![LiftSmart Demo](Screenshots/LiftSmart-Demo.gif)
+![LiftSmart Demo](Screenshots/LiftSmartDemo.gif)
 
 ## 🎯 Problem Statement
 
