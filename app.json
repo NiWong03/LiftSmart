@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
-        "buildNumber": "3",
+      "buildNumber": "3",
       "supportsTablet": true,
       "bundleIdentifier": "com.nicholaswong.LiftSmartAI",
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -62,6 +62,10 @@
       "eas": {
         "projectId": "95aec0c8-53ae-4021-8ad0-8dff172f20a5"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/95aec0c8-53ae-4021-8ad0-8dff172f20a5"
     }
   }
 }
