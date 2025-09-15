@@ -10,6 +10,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
+        "buildNumber": "3",
       "supportsTablet": true,
       "bundleIdentifier": "com.nicholaswong.LiftSmartAI",
       "googleServicesFile": "./GoogleService-Info.plist",
