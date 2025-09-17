@@ -1,9 +1,9 @@
 import { createPlanStyles } from '@/components/styles';
 import { FIREBASE_AUTH } from '@/firebaseAuth/FirebaseConfig';
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, ScrollView, View, } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View, } from 'react-native';
 import { ActivityIndicator, Avatar, Button, Surface, Text, TextInput, useTheme } from 'react-native-paper';
 
 
@@ -84,10 +84,13 @@ const Login = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <ScrollView style={styles.container}>
-        <KeyboardAvoidingView behavior="padding">
-            <View style={styles.content}>
+        <View style={styles.content}>
             {/* Header */}
             <View style={{ alignItems: 'center', marginBottom: 40 }}>
                 <Avatar.Icon 
@@ -163,9 +166,8 @@ const Login = () => {
                 )}
             </Surface>
             </View>
-        </KeyboardAvoidingView>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
